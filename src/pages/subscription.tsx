@@ -191,18 +191,24 @@ export default function Subscription() {
   }
 
   const formatDate = (timestamp: number) => {
+    console.log('🕐 formatDate called with:', timestamp, 'type:', typeof timestamp)
     if (!timestamp || isNaN(timestamp)) {
+      console.log('❌ Invalid timestamp:', timestamp)
       return 'Not available'
     }
     const date = new Date(timestamp * 1000)
+    console.log('📅 Created date:', date)
     if (isNaN(date.getTime())) {
+      console.log('❌ Invalid date object')
       return 'Not available'
     }
-    return date.toLocaleDateString('en-US', {
+    const formatted = date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
     })
+    console.log('✅ Formatted date:', formatted)
+    return formatted
   }
 
   const formatAmount = (amount: number, currency: string) => {
@@ -236,6 +242,16 @@ export default function Subscription() {
     status,
     localSubscription
   })
+
+  // Debug subscription dates specifically
+  if (currentSubscription) {
+    console.log('📅 Current subscription dates:', {
+      current_period_start: currentSubscription.current_period_start,
+      current_period_end: currentSubscription.current_period_end,
+      start_type: typeof currentSubscription.current_period_start,
+      end_type: typeof currentSubscription.current_period_end
+    })
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 lg:p-8">
