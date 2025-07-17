@@ -247,7 +247,14 @@ export default function Profile() {
   }
 
   const formatSimpleDate = (timestamp: number) => {
-    return new Date(timestamp * 1000).toLocaleDateString('en-US', {
+    if (!timestamp || isNaN(timestamp)) {
+      return 'Not available'
+    }
+    const date = new Date(timestamp * 1000)
+    if (isNaN(date.getTime())) {
+      return 'Not available'
+    }
+    return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
