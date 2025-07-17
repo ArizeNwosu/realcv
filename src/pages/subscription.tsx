@@ -55,24 +55,23 @@ export default function Subscription() {
         customerId = user.user_metadata?.stripe_customer_id
       }
       
-      console.log('🔍 Looking for customer ID:', customerId)
-      console.log('📊 User metadata:', user.user_metadata)
-      console.log('💾 Local storage stripe_customer_id:', localStorage.getItem('stripe_customer_id'))
       
       if (customerId) {
-        console.log('🔄 Fetching subscription data for customer:', customerId)
-        const response = await fetch(`/api/subscription-status?customerId=${customerId}`)
+        const response = await fetch(`/api/billing-history?customerId=${customerId}&limit=1`)
         const data = await response.json()
         
-        console.log('📡 Subscription API response:', data)
-        
         if (response.ok) {
-          setSubscriptionData(data)
+          // Transform billing-history response to match subscription-status format
+          const transformedData = {
+            subscription: data.current_subscription,
+            status: data.current_subscription?.status || 'inactive', 
+            plan: data.current_subscription?.plan || 'free'
+          }
+          setSubscriptionData(transformedData)
         } else {
           setError(data.message || 'Failed to load subscription data')
         }
       } else {
-        console.log('⚠️ No customer ID found - using local subscription data')
         // Don't show error if user has a pro plan locally - they might have a valid subscription
         if (localSubscription.plan === 'pro') {
           setError('Your Pro subscription is active, but billing management is not connected. Try "Link My Stripe Account" below to connect your billing.')
@@ -98,10 +97,6 @@ export default function Subscription() {
       const { data: { user } } = await supabase.auth.getUser()
       customerId = user?.user_metadata?.stripe_customer_id
     }
-    
-    console.log('🔍 Opening customer portal for customer:', customerId)
-    console.log('💾 LocalStorage stripe_customer_id:', localStorage.getItem('stripe_customer_id'))
-    console.log('👤 User metadata stripe_customer_id:', (await supabase.auth.getUser()).data.user?.user_metadata?.stripe_customer_id)
     
     if (!customerId) {
       setError('Customer ID not found. Please try linking your account first or contact support.')
@@ -191,24 +186,18 @@ export default function Subscription() {
   }
 
   const formatDate = (timestamp: number) => {
-    console.log('🕐 formatDate called with:', timestamp, 'type:', typeof timestamp)
     if (!timestamp || isNaN(timestamp)) {
-      console.log('❌ Invalid timestamp:', timestamp)
       return 'Not available'
     }
     const date = new Date(timestamp * 1000)
-    console.log('📅 Created date:', date)
     if (isNaN(date.getTime())) {
-      console.log('❌ Invalid date object')
       return 'Not available'
     }
-    const formatted = date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
     })
-    console.log('✅ Formatted date:', formatted)
-    return formatted
   }
 
   const formatAmount = (amount: number, currency: string) => {
@@ -233,25 +222,6 @@ export default function Subscription() {
   const plan = subscriptionData?.plan || localSubscription.plan
   const status = subscriptionData?.status || localSubscription.status
 
-  // Debug logging
-  console.log('🎯 Subscription page state:', {
-    subscriptionData,
-    currentSubscription,
-    isStripeSubscription,
-    plan,
-    status,
-    localSubscription
-  })
-
-  // Debug subscription dates specifically
-  if (currentSubscription) {
-    console.log('📅 Current subscription dates:', {
-      current_period_start: currentSubscription.current_period_start,
-      current_period_end: currentSubscription.current_period_end,
-      start_type: typeof currentSubscription.current_period_start,
-      end_type: typeof currentSubscription.current_period_end
-    })
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 lg:p-8">
