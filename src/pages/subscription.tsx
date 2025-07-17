@@ -386,18 +386,6 @@ export default function Subscription() {
         </div>
 
 
-        {/* Debug Information */}
-        <div className="bg-gray-50 border border-gray-200 rounded-lg shadow-sm p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Debug Information</h2>
-          <div className="text-sm space-y-2">
-            <div><strong>Local Subscription Plan:</strong> {localSubscription.plan}</div>
-            <div><strong>Local Subscription Status:</strong> {localSubscription.status}</div>
-            <div><strong>LocalStorage Customer ID:</strong> {localStorage.getItem('stripe_customer_id') || 'Not found'}</div>
-            <div><strong>Has Stripe Subscription:</strong> {isStripeSubscription ? 'Yes' : 'No'}</div>
-            <div><strong>Subscription Data:</strong> {subscriptionData ? 'Loaded' : 'Not loaded'}</div>
-            <div><strong>Error:</strong> {error || 'None'}</div>
-          </div>
-        </div>
 
         {/* Plan Comparison */}
         <div className="bg-white border border-gray-300 rounded-lg shadow-sm p-6">

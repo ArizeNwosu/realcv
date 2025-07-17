@@ -24,11 +24,11 @@ export default async function handler(
     console.log('🔑 Stripe key status:', process.env.STRIPE_SECRET_KEY ? 'Present' : 'Missing')
     
     // Validate Stripe configuration
-    if (!secretKey) {
+    if (!process.env.STRIPE_SECRET_KEY) {
       throw new Error('STRIPE_SECRET_KEY environment variable is not set')
     }
     
-    if (!secretKey.startsWith('sk_live_') && !secretKey.startsWith('sk_test_')) {
+    if (!process.env.STRIPE_SECRET_KEY.startsWith('sk_live_') && !process.env.STRIPE_SECRET_KEY.startsWith('sk_test_')) {
       throw new Error('Invalid Stripe secret key format')
     }
 
