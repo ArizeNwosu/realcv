@@ -272,8 +272,8 @@ export default function Subscription() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Amount</label>
                   <p className="text-gray-900">
-                    {formatAmount(currentSubscription.price.amount, currentSubscription.price.currency)} 
-                    / {currentSubscription.price.interval}
+                    {formatAmount(currentSubscription.amount, currentSubscription.currency)} 
+                    / {currentSubscription.interval}
                   </p>
                 </div>
 
