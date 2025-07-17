@@ -247,18 +247,24 @@ export default function Profile() {
   }
 
   const formatSimpleDate = (timestamp: number) => {
+    console.log('📅 formatSimpleDate called with:', timestamp, 'type:', typeof timestamp)
     if (!timestamp || isNaN(timestamp)) {
+      console.log('❌ Timestamp failed validation:', timestamp)
       return 'Not available'
     }
     const date = new Date(timestamp * 1000)
+    console.log('🕐 Created date object:', date)
     if (isNaN(date.getTime())) {
+      console.log('❌ Date object is invalid')
       return 'Not available'
     }
-    return date.toLocaleDateString('en-US', {
+    const formatted = date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
     })
+    console.log('✅ Formatted date result:', formatted)
+    return formatted
   }
 
   const getStatusColor = (status: string) => {
