@@ -1,0 +1,438 @@
+/* Layout styles for reusable components */
+
+.container {
+  min-height: 100vh;
+  background: #fafafa;
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+}
+
+.navbarBrand {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  text-decoration: none;
+  letter-spacing: -0.025em;
+  transition: color 0.2s ease;
+}
+
+.navbarBrand:hover {
+  color: #3b82f6;
+}
+
+.navbarActions {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+
+.navLink {
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  text-decoration: none;
+  transition: color 0.2s ease;
+  letter-spacing: -0.025em;
+}
+
+.navLink:hover {
+  color: #111827;
+}
+
+.getStartedButton {
+  padding: 8px 16px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  letter-spacing: -0.025em;
+}
+
+.getStartedButton:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.getStartedButton:active {
+  transform: translateY(0);
+}
+
+.accountButton {
+  padding: 8px 16px;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  letter-spacing: -0.025em;
+}
+
+.accountButton:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+.accountButton:active {
+  transform: translateY(0);
+}
+
+.mainWithNav {
+  padding-top: 88px;
+  min-height: calc(100vh - 64px);
+}
+
+.main {
+  min-height: 100vh;
+  padding-top: 88px;
+}
+
+.content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.pageTitle {
+  font-size: 36px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 32px;
+  letter-spacing: -0.025em;
+  text-align: center;
+  padding: 48px 24px 0;
+}
+
+.footer {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 0 16px 0;
+  border-top: 1px solid #e5e7eb;
+  background: transparent;
+  font-size: 15px;
+  color: #6b7280;
+  margin-top: 48px;
+}
+
+.footerLink {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6b7280;
+  text-decoration: none;
+  transition: color 0.2s, text-decoration 0.2s;
+  font-weight: 500;
+}
+
+.footerLink:hover {
+  color: #3b82f6;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.copyright {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* Hamburger Menu Styles */
+.hamburgerButton {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.hamburgerButton:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.hamburgerLine {
+  width: 20px;
+  height: 2px;
+  background-color: #374151;
+  transition: all 0.3s ease;
+  margin: 2px 0;
+}
+
+/* Mobile Menu Styles */
+.mobileMenuOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 60;
+  backdrop-filter: blur(4px);
+}
+
+.mobileMenu {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 280px;
+  max-width: 80vw;
+  background: white;
+  z-index: 70;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+  transform: translateX(0);
+  animation: slideInFromRight 0.3s ease-out;
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.mobileMenuHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.mobileMenuTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.mobileMenuClose {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #6b7280;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.mobileMenuClose:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #111827;
+}
+
+.mobileMenuContent {
+  padding: 24px 0;
+  overflow-y: auto;
+  max-height: calc(100vh - 80px);
+}
+
+.mobileMenuLink {
+  display: block;
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #374151;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.mobileMenuLink:hover {
+  background-color: #f3f4f6;
+  color: #111827;
+  border-left-color: #3b82f6;
+}
+
+.mobileMenuButton {
+  display: block;
+  width: calc(100% - 48px);
+  margin: 8px 24px;
+  padding: 12px 16px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.mobileMenuButton:hover {
+  background: #2563eb;
+}
+
+.mobileMenuDivider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 16px 24px;
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    padding: 0 16px;
+  }
+  
+  .navbarActions {
+    gap: 8px;
+  }
+  
+  .navLink {
+    font-size: 13px;
+    display: none; /* Hide nav links on mobile */
+  }
+  
+  .hamburgerButton {
+    display: flex; /* Show hamburger button on mobile */
+  }
+  
+  .getStartedButton {
+    padding: 6px 12px;
+    font-size: 13px;
+    display: none; /* Hide on mobile, will be in hamburger menu */
+  }
+  
+  .accountButton {
+    padding: 6px 12px;
+    font-size: 13px;
+    display: none; /* Hide on mobile, will be in hamburger menu */
+  }
+  
+  .content {
+    padding: 0 16px;
+  }
+  
+  .pageTitle {
+    font-size: 28px;
+    padding: 24px 16px 0;
+    text-align: left;
+  }
+  
+  .footer {
+    flex-direction: column;
+    gap: 16px;
+    padding: 24px 16px;
+    text-align: center;
+  }
+  
+  .footerLink {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    height: 56px;
+    padding: 0 12px;
+  }
+  
+  .navbarBrand {
+    font-size: 18px;
+  }
+  
+  .navbarActions {
+    gap: 8px;
+  }
+  
+  .navLink {
+    font-size: 12px;
+    display: none; /* Hide all nav links on small mobile */
+  }
+  
+  .hamburgerButton {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .hamburgerLine {
+    width: 18px;
+  }
+  
+  .getStartedButton {
+    display: none; /* Hide on small mobile */
+  }
+  
+  .accountButton {
+    display: none; /* Hide on small mobile */
+  }
+  
+  .mainWithNav {
+    padding-top: 72px;
+    min-height: calc(100vh - 72px);
+  }
+  
+  .main {
+    padding-top: 72px;
+  }
+  
+  .content {
+    padding: 0 12px;
+  }
+  
+  .pageTitle {
+    font-size: 24px;
+    padding: 16px 12px 0;
+    text-align: left;
+  }
+  
+  .footer {
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px 12px;
+    font-size: 14px;
+  }
+  
+  .footerLink {
+    font-size: 13px;
+  }
+  
+  .mobileMenu {
+    width: 260px;
+  }
+  
+  .mobileMenuHeader {
+    padding: 16px 20px;
+  }
+  
+  .mobileMenuTitle {
+    font-size: 16px;
+  }
+}

@@ -1,0 +1,31 @@
+/* Global navbar spacing fix for all pages except landing */
+
+/* Apply top padding to body for fixed navbar */
+body {
+  padding-top: 64px;
+}
+
+/* Remove padding for landing page specifically */
+body.landing-page {
+  padding-top: 0;
+}
+
+/* Adjust editor page which already has its own spacing */
+.editor-page {
+  padding-top: 0;
+}
+
+/* Mobile adjustments */
+@media (max-width: 480px) {
+  body {
+    padding-top: 56px;
+  }
+  
+  body.landing-page {
+    padding-top: 0;
+  }
+  
+  .editor-page {
+    padding-top: 0;
+  }
+}
