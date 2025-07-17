@@ -27,6 +27,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Get current active subscription
     const activeSubscription = subscriptions.data.find(sub => sub.status === 'active')
 
+    console.log('🔍 Active subscription found:', activeSubscription ? 'Yes' : 'No')
+    if (activeSubscription) {
+      console.log('📅 Stripe subscription dates:', {
+        current_period_start: activeSubscription.current_period_start,
+        current_period_end: activeSubscription.current_period_end,
+        start_type: typeof activeSubscription.current_period_start,
+        end_type: typeof activeSubscription.current_period_end
+      })
+    }
+
     if (!activeSubscription) {
       return res.status(200).json({
         subscription: null,
