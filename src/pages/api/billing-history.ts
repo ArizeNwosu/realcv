@@ -103,6 +103,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     } : null
 
     console.log('📊 Current subscription:', currentSubscription ? currentSubscription.id : 'none')
+    console.log('🔍 Current subscription details:', currentSubscription)
+    if (currentSubscription) {
+      console.log('📅 Period start:', currentSubscription.current_period_start, 'type:', typeof currentSubscription.current_period_start)
+      console.log('📅 Period end:', currentSubscription.current_period_end, 'type:', typeof currentSubscription.current_period_end)
+    }
 
     const response = {
       payments: paymentHistory,

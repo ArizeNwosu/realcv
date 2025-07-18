@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { SubscriptionManager } from '../lib/subscription'
+import { supabase } from '../lib/supabase'
 
 export default function Pricing() {
   const [loading, setLoading] = useState(false)
@@ -10,12 +11,51 @@ export default function Pricing() {
     plan: 'free',
     status: 'inactive'
   })
+  const [checkingSubscription, setCheckingSubscription] = useState(true)
   const router = useRouter()
   
   useEffect(() => {
-    // Load subscription status on client side
-    setSubscription(SubscriptionManager.getSubscriptionStatus())
+    checkSubscriptionStatus()
   }, [])
+
+  const checkSubscriptionStatus = async () => {
+    try {
+      // First check local subscription
+      const localSub = SubscriptionManager.getSubscriptionStatus()
+      setSubscription(localSub)
+
+      // Then check if user is authenticated and has Stripe subscription
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (user) {
+        // Try to get customer ID from multiple sources
+        let customerId = localStorage.getItem('stripe_customer_id') || user.user_metadata?.stripe_customer_id
+        
+        if (customerId) {
+          try {
+            const response = await fetch(`/api/billing-history?customerId=${customerId}&limit=1`)
+            const data = await response.json()
+            
+            if (response.ok && data.current_subscription) {
+              // User has active Stripe subscription - override local status
+              setSubscription({
+                isActive: true,
+                plan: 'pro',
+                status: 'active'
+              })
+            }
+          } catch (error) {
+            console.log('Could not check Stripe subscription:', error)
+            // Keep local subscription status if Stripe check fails
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error checking subscription:', error)
+    } finally {
+      setCheckingSubscription(false)
+    }
+  }
 
   const handleSubscribe = async () => {
     setLoading(true)
@@ -219,10 +259,10 @@ export default function Pricing() {
 
             <button
               onClick={handleSubscribe}
-              disabled={loading || subscription.isActive}
+              disabled={loading || subscription.isActive || checkingSubscription}
               className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors font-medium text-sm sm:text-base"
             >
-              {loading ? 'Processing...' : subscription.isActive ? 'Already Subscribed' : 'Subscribe to Pro'}
+              {checkingSubscription ? 'Checking subscription...' : loading ? 'Processing...' : subscription.isActive ? 'Already Subscribed' : 'Subscribe to Pro'}
             </button>
           </div>
         </div>
