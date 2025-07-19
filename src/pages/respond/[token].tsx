@@ -1,21 +1,22 @@
 import { useState, useEffect, useRef } from 'react'
-import { GetServerSideProps } from 'next'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
-import { Question, QuestionSet } from '../../lib/responsePortal'
+import { Question, QuestionSet, ResponsePortalManager } from '../../lib/responsePortal'
 import styles from '../../styles/respond.module.css'
 
 interface ResponsePageProps {
-  questionSet: QuestionSet | null
-  error?: string
+  // No longer using SSR props
 }
 
 interface ResponseState {
   [questionId: string]: string
 }
 
-export default function ResponsePage({ questionSet, error }: ResponsePageProps) {
+export default function ResponsePage({}: ResponsePageProps) {
   const router = useRouter()
+  const [questionSet, setQuestionSet] = useState<QuestionSet | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [responses, setResponses] = useState<ResponseState>({})
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -27,6 +28,26 @@ export default function ResponsePage({ questionSet, error }: ResponsePageProps) 
 
   const textareaRefs = useRef<{ [questionId: string]: HTMLTextAreaElement | null }>({})
   const [telemetryData, setTelemetryData] = useState<{ [questionId: string]: any }>({})
+
+  // Load question set on client side
+  useEffect(() => {
+    if (router.query.token && typeof router.query.token === 'string') {
+      const token = router.query.token
+      try {
+        const qs = ResponsePortalManager.getQuestionSetByToken(token)
+        if (qs) {
+          setQuestionSet(qs)
+          setError(null)
+        } else {
+          setError('Question set not found or expired')
+        }
+      } catch (err) {
+        setError('Failed to load question set')
+        console.error('Error loading question set:', err)
+      }
+      setLoading(false)
+    }
+  }, [router.query.token])
 
   // Initialize telemetry data for each question
   useEffect(() => {
@@ -56,6 +77,20 @@ export default function ResponsePage({ questionSet, error }: ResponsePageProps) 
       setTelemetryData(initialData)
     }
   }, [questionSet])
+
+  if (loading) {
+    return (
+      <div className={styles.container}>
+        <Head>
+          <title>Loading... - RealCV</title>
+        </Head>
+        <div className={styles.errorContainer}>
+          <h1>Loading...</h1>
+          <p>Please wait while we load your questions.</p>
+        </div>
+      </div>
+    )
+  }
 
   if (error || !questionSet) {
     return (
@@ -417,44 +452,4 @@ export default function ResponsePage({ questionSet, error }: ResponsePageProps) 
   )
 }
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  const { token } = context.params!
-
-  if (!token || typeof token !== 'string') {
-    return {
-      props: {
-        questionSet: null,
-        error: 'Invalid token'
-      }
-    }
-  }
-
-  try {
-    // Import and use the manager directly on server side
-    const { ResponsePortalManager } = await import('../../lib/responsePortal')
-    const questionSet = ResponsePortalManager.getQuestionSetByToken(token)
-    
-    if (!questionSet) {
-      return {
-        props: {
-          questionSet: null,
-          error: 'Question set not found or expired'
-        }
-      }
-    }
-
-    return {
-      props: {
-        questionSet
-      }
-    }
-  } catch (error) {
-    console.error('Error fetching question set:', error)
-    return {
-      props: {
-        questionSet: null,
-        error: 'Failed to load questions'
-      }
-    }
-  }
-}
+// No longer using getServerSideProps - using client-side loading instead
