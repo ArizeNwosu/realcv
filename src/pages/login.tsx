@@ -80,12 +80,26 @@ export default function Login() {
         
         setSuccess('Please check your email to confirm your signup!')
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         })
         if (error) throw error
-        window.location.href = '/profile'
+        
+        // Check if user is an employer based on their metadata
+        const userType = data.user?.user_metadata?.user_type
+        const redirectUrl = router.query.redirect as string
+        
+        if (redirectUrl) {
+          // If there's a redirect URL, use it
+          window.location.href = redirectUrl
+        } else if (userType === 'employer') {
+          // Employer users go to recruiter dashboard
+          window.location.href = '/recruiter-dashboard'
+        } else {
+          // Job seekers go to profile/dashboard
+          window.location.href = '/profile'
+        }
       }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred')
@@ -225,13 +239,23 @@ export default function Login() {
             </button>
           </div>
 
-          <div className="mt-4 text-center">
-            <Link 
-              href="/" 
-              className="text-gray-600 hover:text-gray-700 text-sm"
-            >
-              ← Back to Home
-            </Link>
+          <div className="mt-4 text-center space-y-2">
+            <div>
+              <Link 
+                href="/employer-signup" 
+                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+              >
+                Are you hiring? Create Employer Account →
+              </Link>
+            </div>
+            <div>
+              <Link 
+                href="/" 
+                className="text-gray-600 hover:text-gray-700 text-sm"
+              >
+                ← Back to Home
+              </Link>
+            </div>
           </div>
         </div>
       </div>
