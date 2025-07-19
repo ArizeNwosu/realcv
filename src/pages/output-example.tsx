@@ -78,19 +78,23 @@ export default function OutputExample() {
         {/* Verification Section */}
         <div style={{marginTop: 32, padding: 16, background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, textAlign: 'center'}}>
           <div style={{fontWeight: 600, color: '#16a34a', marginBottom: 8}}>✅ Verified Human Creation</div>
-          <div style={{fontSize: '0.98rem', color: '#374151', marginBottom: 8}}>
+          <div style={{fontSize: '0.98rem', color: '#374151', marginBottom: 12}}>
             Creator: @WilliamGates<br/>
             Content: "William's 2025 Resume"<br/>
             Method: Typed over 43 minutes with 7 revisions, no copy/paste events<br/>
             Location: Web app (macOS)<br/>
             Date: July 15, 2025<br/>
-            Trust Level: Tier 2 (Process-based Proof)
+            Trust Level: Tier 2 (Process-based Proof)<br/>
+            <strong>Document Code: WG2025REAL01</strong>
           </div>
-          <a href="https://www.realcv.app" target="_blank" rel="noopener noreferrer">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=https://www.realcv.app" alt="QR code to RealCV" style={{borderRadius: 8, background: '#fff', border: '1px solid #e5e7eb', margin: '0 auto'}}/>
+          <a href={`${typeof window !== 'undefined' ? window.location.origin : 'https://www.realcv.app'}/verify-demo/WG2025REAL01`} target="_blank" rel="noopener noreferrer">
+            <img src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : 'https://www.realcv.app'}/verify-demo/WG2025REAL01`)}`} alt="QR code to verification page" style={{borderRadius: 8, background: '#fff', border: '1px solid #e5e7eb', margin: '0 auto'}}/>
           </a>
+          <div style={{marginTop: 8, fontSize: 12, color: '#6b7280'}}>
+            Scan QR code or enter code <strong>WG2025REAL01</strong> to verify
+          </div>
           <div>
-            <a href="https://www.realcv.app" target="_blank" rel="noopener noreferrer" style={{color: '#2563eb', textDecoration: 'underline', fontSize: 13, marginTop: 8, display: 'inline-block'}}>View Public Proof</a>
+            <a href={`${typeof window !== 'undefined' ? window.location.origin : 'https://www.realcv.app'}/verify-demo/WG2025REAL01`} target="_blank" rel="noopener noreferrer" style={{color: '#2563eb', textDecoration: 'underline', fontSize: 13, marginTop: 8, display: 'inline-block'}}>View Public Proof</a>
           </div>
         </div>
       </div>

@@ -20,7 +20,16 @@ export default function VerifyCode() {
     setError('')
 
     try {
-      const resumeId = DocumentCodeManager.getResumeIdByCode(documentCode.toUpperCase())
+      const code = documentCode.toUpperCase()
+      
+      // Check if it's the demo verification code
+      if (code === 'WG2025REAL01') {
+        router.push(`/verify-demo/${code}`)
+        return
+      }
+      
+      // Check regular document codes
+      const resumeId = DocumentCodeManager.getResumeIdByCode(code)
       
       if (resumeId) {
         router.push(`/verify/${resumeId}`)
@@ -93,7 +102,16 @@ export default function VerifyCode() {
           </button>
         </form>
 
-        <div className="mt-8 pt-6 border-t border-gray-200">
+        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="text-sm text-blue-800">
+            <div className="font-medium mb-1">🎭 Try the Demo!</div>
+            <div>
+              Enter <strong>WG2025REAL01</strong> to see a live verification example of Bill Gates' resume.
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 pt-6 border-t border-gray-200">
           <div className="text-sm text-gray-600 space-y-2">
             <div className="font-medium">What is a document code?</div>
             <div>
