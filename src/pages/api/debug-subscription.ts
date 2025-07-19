@@ -17,12 +17,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ message: 'Customer ID is required' })
     }
 
-    // Get customer's subscriptions
+    // Get customer's subscriptions with expanded data
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: 'all',
-      limit: 10
+      limit: 10,
+      expand: ['data.default_payment_method', 'data.latest_invoice']
     })
+
+    // Also try fetching the first subscription individually
+    let detailedSubscription = null
+    if (subscriptions.data.length > 0) {
+      try {
+        detailedSubscription = await stripe.subscriptions.retrieve(subscriptions.data[0].id)
+      } catch (err) {
+        console.error('Error fetching detailed subscription:', err)
+      }
+    }
 
     const debugInfo = {
       customer_id: customerId,
@@ -39,8 +50,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         price_id: sub.items.data[0]?.price?.id,
         amount: sub.items.data[0]?.price?.unit_amount,
         currency: sub.items.data[0]?.price?.currency,
-        interval: sub.items.data[0]?.price?.recurring?.interval
-      }))
+        interval: sub.items.data[0]?.price?.recurring?.interval,
+        all_keys: Object.keys(sub).sort(),
+        has_period_start: 'current_period_start' in sub,
+        has_period_end: 'current_period_end' in sub
+      })),
+      detailed_subscription: detailedSubscription ? {
+        id: detailedSubscription.id,
+        status: detailedSubscription.status,
+        current_period_start: detailedSubscription.current_period_start,
+        current_period_end: detailedSubscription.current_period_end,
+        current_period_start_type: typeof detailedSubscription.current_period_start,
+        current_period_end_type: typeof detailedSubscription.current_period_end,
+        all_keys: Object.keys(detailedSubscription).sort(),
+        has_period_start: 'current_period_start' in detailedSubscription,
+        has_period_end: 'current_period_end' in detailedSubscription
+      } : null
     }
 
     return res.status(200).json(debugInfo)
