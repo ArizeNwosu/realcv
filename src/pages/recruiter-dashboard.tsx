@@ -7,6 +7,7 @@ export default function RecruiterDashboard() {
   const [submissions, setSubmissions] = useState<CandidateSubmission[]>([])
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [editingSet, setEditingSet] = useState<QuestionSet | null>(null)
+  const [showDebugInfo, setShowDebugInfo] = useState(false)
   const [title, setTitle] = useState('Software Engineer Follow-up Questions')
   const [questions, setQuestions] = useState([
     'Describe a challenging technical problem you solved recently and walk me through your approach.',
@@ -203,6 +204,22 @@ export default function RecruiterDashboard() {
           {showCreateForm ? 'Cancel' : '+ Create Question Set'}
         </button>
         
+        <button
+          onClick={() => setShowDebugInfo(!showDebugInfo)}
+          style={{
+            background: '#f59e0b',
+            color: 'white',
+            border: 'none',
+            padding: '12px 24px',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '16px',
+            marginRight: '8px'
+          }}
+        >
+          {showDebugInfo ? 'Hide Debug' : 'Show Debug Info'}
+        </button>
+        
         {showCreateForm && (
           <button
             onClick={resetForm}
@@ -280,6 +297,40 @@ export default function RecruiterDashboard() {
             >
               Cancel
             </button>
+          </div>
+        </div>
+      )}
+
+      {showDebugInfo && (
+        <div style={{ background: 'white', borderRadius: '12px', padding: '24px', marginBottom: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+          <h2 style={{ margin: '0 0 16px 0', color: '#111827' }}>Debug Information</h2>
+          
+          <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '8px', fontFamily: 'monospace', fontSize: '12px' }}>
+            <h3 style={{ margin: '0 0 8px 0' }}>localStorage Contents:</h3>
+            <div style={{ marginBottom: '16px' }}>
+              <strong>Question Sets:</strong>
+              <pre style={{ background: 'white', padding: '8px', borderRadius: '4px', margin: '4px 0', overflow: 'auto' }}>
+                {JSON.stringify(JSON.parse(localStorage.getItem('realcv_question_sets') || '[]'), null, 2)}
+              </pre>
+            </div>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <strong>Available Tokens:</strong>
+              <pre style={{ background: 'white', padding: '8px', borderRadius: '4px', margin: '4px 0' }}>
+                {questionSets.map(qs => qs.token).join('\n')}
+              </pre>
+            </div>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <strong>Test Token (resp_8cjmrg62tmimdas7bg3):</strong>
+              <pre style={{ background: 'white', padding: '8px', borderRadius: '4px', margin: '4px 0' }}>
+                {JSON.stringify(ResponsePortalManager.getQuestionSetByToken('resp_8cjmrg62tmimdas7bg3'), null, 2)}
+              </pre>
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <strong>Current Domain:</strong> {window.location.hostname}
+            </div>
           </div>
         </div>
       )}
