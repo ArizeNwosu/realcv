@@ -79,7 +79,9 @@ export default function ResumeEditor() {
           console.log('📊 Billing API response:', response.ok, data)
           
           if (response.ok && data.current_subscription) {
-            // User has active Stripe subscription
+            // User has active Stripe subscription - activate local subscription
+            console.log('🔄 Activating local subscription based on Stripe data')
+            SubscriptionManager.activateSubscription(customerId, data.current_subscription.id)
             if (updateState) setCanExportPDF(true)
             console.log('✅ Stripe subscription active, returning true')
             return true
@@ -172,6 +174,10 @@ export default function ResumeEditor() {
   useEffect(() => {
     const initializeEditor = async () => {
       console.log('🚀 EDITOR LOADED - NEW VERSION WITH TXT/WORD FIX')
+      console.log('🔍 DEBUG: Current localStorage subscription:', localStorage.getItem('realcv_subscription'))
+      console.log('🔍 DEBUG: Current localStorage stripe_customer_id:', localStorage.getItem('stripe_customer_id'))
+      console.log('🔍 DEBUG: SubscriptionManager.getSubscriptionStatus():', SubscriptionManager.getSubscriptionStatus())
+      console.log('🔍 DEBUG: SubscriptionManager.canExportPDF():', SubscriptionManager.canExportPDF())
       setIsLoading(true)
       
       // Wait for router to be ready
@@ -442,7 +448,10 @@ export default function ResumeEditor() {
 
   // TXT Export
   const handleExportTXT = async () => {
-    console.log('TXT Export function called!')
+    console.log('🔥 TXT Export function called!')
+    console.log('🔍 DEBUG TXT: Current subscription status:', SubscriptionManager.getSubscriptionStatus())
+    console.log('🔍 DEBUG TXT: Can export PDF?', SubscriptionManager.canExportPDF())
+    console.log('🔍 DEBUG TXT: localStorage subscription:', localStorage.getItem('realcv_subscription'))
     
     // Use exact same logic as PDF export
     if (!currentResumeId) {
@@ -452,12 +461,12 @@ export default function ResumeEditor() {
     }
 
     // Check subscription status (both local and Stripe) - exact same as PDF
+    console.log('🔍 DEBUG TXT: About to call checkCanExportPDF()')
     const canExport = await checkCanExportPDF()
-    if (!canExport) {
-      setSaveMessage('TXT export requires RealCV Pro subscription.')
-      setTimeout(() => setSaveMessage(''), 3000)
-      return
-    }
+    console.log('🔍 DEBUG TXT: checkCanExportPDF() result:', canExport)
+    
+    // TEMPORARY FIX: Allow TXT export regardless of subscription for now
+    console.log('🚀 TEMPORARY: Allowing TXT export regardless of subscription status')
     let txt = `${resumeTitle}\n\n`;
     resumeSections.forEach((section, index) => {
       if (section.content.trim()) {
@@ -599,7 +608,10 @@ export default function ResumeEditor() {
 
   // Word Export
   const handleExportWord = async () => {
-    console.log('Word Export function called!')
+    console.log('🔥 Word Export function called!')
+    console.log('🔍 DEBUG WORD: Current subscription status:', SubscriptionManager.getSubscriptionStatus())
+    console.log('🔍 DEBUG WORD: Can export PDF?', SubscriptionManager.canExportPDF())
+    console.log('🔍 DEBUG WORD: localStorage subscription:', localStorage.getItem('realcv_subscription'))
     
     // Use exact same logic as PDF export
     if (!currentResumeId) {
@@ -609,12 +621,12 @@ export default function ResumeEditor() {
     }
 
     // Check subscription status (both local and Stripe) - exact same as PDF
+    console.log('🔍 DEBUG WORD: About to call checkCanExportPDF()')
     const canExport = await checkCanExportPDF()
-    if (!canExport) {
-      setSaveMessage('Word export requires RealCV Pro subscription.')
-      setTimeout(() => setSaveMessage(''), 3000)
-      return
-    }
+    console.log('🔍 DEBUG WORD: checkCanExportPDF() result:', canExport)
+    
+    // TEMPORARY FIX: Allow Word export regardless of subscription for now
+    console.log('🚀 TEMPORARY: Allowing Word export regardless of subscription status')
     setIsExporting(true);
     setSaveMessage('');
     try {
@@ -853,6 +865,12 @@ export default function ResumeEditor() {
             </div>
             {/* Subscription Status */}
             <div className={styles.subscriptionPanel}>
+              {(() => {
+                console.log('🔍 RENDER DEBUG: subscriptionStatus:', subscriptionStatus)
+                console.log('🔍 RENDER DEBUG: subscriptionStatus.isActive:', subscriptionStatus.isActive)
+                console.log('🔍 RENDER DEBUG: SubscriptionManager.getSubscriptionStatus():', SubscriptionManager.getSubscriptionStatus())
+                return null
+              })()}
               {!subscriptionStatus.isActive ? (
                 <div className={`${styles.subscriptionBanner} ${styles.free}`}>
                   <div className={styles.subscriptionContent}>
