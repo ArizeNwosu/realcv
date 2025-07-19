@@ -155,7 +155,9 @@ export class PDFExporter {
       // Add underline
       const titleWidth = pdf.getTextWidth(sectionTitle)
       pdf.line(margin, yPosition + 1, margin + titleWidth, yPosition + 1)
-      yPosition += 4 // Reduced spacing after section title
+      const yAfterTitle = yPosition + 2 // More aggressive spacing reduction after section title
+      console.log('PDF Export - Section:', section.title, 'Y after title:', yAfterTitle)
+      yPosition = yAfterTitle
       
       // Section content with formatting
       pdf.setFontSize(10)
@@ -171,8 +173,12 @@ export class PDFExporter {
       console.log('PDF Export - Processing section:', section.title, 'Content length:', section.content.length)
       
       // Render formatted content directly
+      const yBeforeContent = yPosition
+      console.log('PDF Export - Section:', section.title, 'Y before content:', yBeforeContent)
       yPosition = this.renderFormattedText(section.content, pdf, margin, yPosition, contentWidth)
-      yPosition += 3 // Reduced spacing after section content
+      const yAfterContent = yPosition + 3 // Reduced spacing after section content
+      console.log('PDF Export - Section:', section.title, 'Y after content:', yAfterContent, 'Content height:', yAfterContent - yBeforeContent)
+      yPosition = yAfterContent
       
       // Add line divider between sections (except for the last section)
       const isLastSection = sections.indexOf(section) === sections.length - 1
