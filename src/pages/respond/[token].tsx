@@ -33,17 +33,26 @@ export default function ResponsePage({}: ResponsePageProps) {
   useEffect(() => {
     if (router.query.token && typeof router.query.token === 'string') {
       const token = router.query.token
+      console.log('🔍 Looking for token:', token)
+      
       try {
+        // Debug: Check what's in localStorage
+        const allQuestionSets = ResponsePortalManager.getAllQuestionSets()
+        console.log('📦 All question sets in localStorage:', allQuestionSets)
+        console.log('🔍 Available tokens:', allQuestionSets.map(qs => qs.token))
+        
         const qs = ResponsePortalManager.getQuestionSetByToken(token)
         if (qs) {
+          console.log('✅ Found question set:', qs)
           setQuestionSet(qs)
           setError(null)
         } else {
-          setError('Question set not found or expired')
+          console.log('❌ Question set not found for token:', token)
+          setError(`Question set not found or expired. Token: ${token}`)
         }
       } catch (err) {
+        console.error('❌ Error loading question set:', err)
         setError('Failed to load question set')
-        console.error('Error loading question set:', err)
       }
       setLoading(false)
     }
