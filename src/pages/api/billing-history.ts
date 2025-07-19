@@ -90,6 +90,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Get current subscription info
     const activeSubscription = subscriptions.data.find(sub => sub.status === 'active')
+    console.log('🔍 Raw active subscription from Stripe:', activeSubscription)
+    if (activeSubscription) {
+      console.log('📅 Raw Stripe period start:', activeSubscription.current_period_start, 'type:', typeof activeSubscription.current_period_start)
+      console.log('📅 Raw Stripe period end:', activeSubscription.current_period_end, 'type:', typeof activeSubscription.current_period_end)
+      console.log('🔧 Full activeSubscription keys:', Object.keys(activeSubscription))
+    }
+    
     const currentSubscription = activeSubscription ? {
       id: activeSubscription.id,
       status: activeSubscription.status,
