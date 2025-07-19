@@ -13,6 +13,8 @@ interface ResponseState {
 }
 
 export default function ResponsePage({}: ResponsePageProps) {
+  console.log('🚀 ResponsePage component loaded')
+  
   const router = useRouter()
   const [questionSet, setQuestionSet] = useState<QuestionSet | null>(null)
   const [loading, setLoading] = useState(true)
