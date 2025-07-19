@@ -4,6 +4,7 @@ import { defaultResumeTemplate, ResumeSection as ResumeSectionType } from '../li
 import { ResumeStorage } from '../lib/storage'
 import { PDFExporter } from '../lib/pdfExport'
 import { SubscriptionManager } from '../lib/subscription'
+import { supabase } from '../lib/supabase'
 import ResumeSection from '../components/ResumeSection'
 import ResumePreview from '../components/ResumePreview'
 import styles from '../styles/editor.module.css'
@@ -39,11 +40,46 @@ export default function ResumeEditor() {
     plan: 'free',
     status: 'inactive'
   })
+  const [canExportPDF, setCanExportPDF] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [pasteError, setPasteError] = useState('');
 
   const updateStats = () => {
     setSessionStats(trackerRef.current.getSessionSummary())
+  }
+
+  const checkCanExportPDF = async (updateState = false): Promise<boolean> => {
+    // First check local subscription
+    if (SubscriptionManager.canExportPDF()) {
+      if (updateState) setCanExportPDF(true)
+      return true
+    }
+
+    // Then check Stripe subscription for authenticated users
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (user) {
+        // Try to get customer ID from multiple sources
+        let customerId = localStorage.getItem('stripe_customer_id') || user.user_metadata?.stripe_customer_id
+        
+        if (customerId) {
+          const response = await fetch(`/api/billing-history?customerId=${customerId}&limit=1`)
+          const data = await response.json()
+          
+          if (response.ok && data.current_subscription) {
+            // User has active Stripe subscription
+            if (updateState) setCanExportPDF(true)
+            return true
+          }
+        }
+      }
+    } catch (error) {
+      console.log('Could not check Stripe subscription for export:', error)
+    }
+
+    if (updateState) setCanExportPDF(false)
+    return false
   }
 
   // Calculate total word count across all sections
@@ -354,8 +390,9 @@ export default function ResumeEditor() {
       return
     }
 
-    // Check subscription status
-    if (!SubscriptionManager.canExportPDF()) {
+    // Check subscription status (both local and Stripe)
+    const canExport = await checkCanExportPDF()
+    if (!canExport) {
       setSaveMessage('PDF export requires RealCV Pro subscription.')
       setTimeout(() => setSaveMessage(''), 3000)
       return
@@ -614,9 +651,15 @@ export default function ResumeEditor() {
 
   // Update subscription status periodically
   useEffect(() => {
-    const interval = setInterval(() => {
+    const updateSubscriptionStatus = async () => {
       setSubscriptionStatus(SubscriptionManager.getSubscriptionStatus())
-    }, 10000) // Check every 10 seconds
+      await checkCanExportPDF(true) // Update export capability
+    }
+
+    // Check immediately on mount
+    updateSubscriptionStatus()
+
+    const interval = setInterval(updateSubscriptionStatus, 10000) // Check every 10 seconds
 
     return () => clearInterval(interval)
   }, [])
@@ -795,7 +838,8 @@ export default function ResumeEditor() {
         isVisible={showPreview}
         onClose={() => setShowPreview(false)}
         onExportPDF={async () => {
-          if (!SubscriptionManager.isSubscriptionActive()) {
+          const canExport = await checkCanExportPDF()
+          if (!canExport) {
             setShowPreview(false);
             router.push('/pricing');
             return;
@@ -825,7 +869,7 @@ export default function ResumeEditor() {
             setTimeout(() => setSaveMessage(''), 3000);
           }
         }}
-        canExportPDF={SubscriptionManager.isSubscriptionActive()}
+        canExportPDF={canExportPDF}
         isExporting={isExporting}
       />
     </div>
