@@ -55,6 +55,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       limit: 5
     })
     console.log('📝 Subscriptions found:', subscriptions.data.length)
+    console.log('📋 All subscription statuses:', subscriptions.data.map(sub => `${sub.id}: ${sub.status}`))
 
     // Process payment history
     const paymentHistory = [
@@ -88,8 +89,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     paymentHistory.sort((a, b) => b.date - a.date)
     console.log('📈 Payment history processed:', paymentHistory.length, 'items')
 
-    // Get current subscription info
-    const activeSubscription = subscriptions.data.find(sub => sub.status === 'active')
+    // Get current subscription info - try to find any active-like subscription
+    let activeSubscription = subscriptions.data.find(sub => sub.status === 'active')
+    console.log('🔍 Active subscription found:', activeSubscription ? activeSubscription.id : 'none')
+    
+    // If no active subscription, check for other valid statuses
+    if (!activeSubscription) {
+      activeSubscription = subscriptions.data.find(sub => ['trialing', 'past_due'].includes(sub.status))
+      console.log('🔍 Non-active but valid subscription found:', activeSubscription ? `${activeSubscription.id} (${activeSubscription.status})` : 'none')
+    }
+    
+    // If still none, just take the first subscription for debugging
+    if (!activeSubscription && subscriptions.data.length > 0) {
+      activeSubscription = subscriptions.data[0]
+      console.log('🔍 Using first subscription for debugging:', activeSubscription.id, activeSubscription.status)
+    }
+    
     console.log('🔍 Raw active subscription from Stripe:', activeSubscription)
     if (activeSubscription) {
       console.log('📅 Raw Stripe period start:', activeSubscription.current_period_start, 'type:', typeof activeSubscription.current_period_start)
