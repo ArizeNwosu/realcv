@@ -85,7 +85,7 @@ export class PDFExporter {
               break
               
             case 'p':
-              // Process paragraph content and add line break after
+              // Process paragraph content - no extra line breaks
               const pText = element.textContent?.trim()
               if (pText) {
                 lines.push(pText)
@@ -93,7 +93,7 @@ export class PDFExporter {
               break
               
             case 'div':
-              // For divs, process children instead of text content to avoid duplication
+              // For divs, process children but don't add extra line breaks
               Array.from(element.childNodes).forEach(child => {
                 processElement(child)
               })
@@ -155,10 +155,20 @@ export class PDFExporter {
     // Process HTML content
     const lines = getText(tempDiv)
     
-    for (const line of lines) {
-      if (line === '') {
-        // Empty line for spacing
-        currentY += 5
+    // Filter out consecutive empty lines and excessive whitespace
+    const filteredLines = lines.filter((line, index) => {
+      // Keep non-empty lines
+      if (line.trim() !== '') return true
+      
+      // For empty lines, only keep if the previous line was not empty
+      if (index === 0) return false
+      return lines[index - 1].trim() !== ''
+    })
+
+    for (const line of filteredLines) {
+      if (line.trim() === '') {
+        // Empty line for spacing - reduced spacing
+        currentY += 3
       } else {
         // Wrap long lines
         const wrappedLines = pdf.splitTextToSize(line, maxWidth)
@@ -225,7 +235,7 @@ export class PDFExporter {
       // Add underline
       const titleWidth = pdf.getTextWidth(sectionTitle)
       pdf.line(margin, yPosition + 1, margin + titleWidth, yPosition + 1)
-      yPosition += 6
+      yPosition += 4 // Reduced spacing after section title
       
       // Section content with formatting
       pdf.setFontSize(10)
@@ -239,7 +249,7 @@ export class PDFExporter {
       
       // Render formatted content directly
       yPosition = this.renderFormattedText(section.content, pdf, margin, yPosition, contentWidth)
-      yPosition += 6 // Add some spacing after section
+      yPosition += 3 // Reduced spacing after section content
       
       // Add line divider between sections (except for the last section)
       const isLastSection = sections.indexOf(section) === sections.length - 1
