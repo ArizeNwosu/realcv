@@ -53,7 +53,7 @@ export function Navbar() {
           <a href="/dashboard" className={styles.navLink}>
             My Resumes
           </a>
-          <a href="/employers" className={styles.navLink}>
+          <a href="/login?signup=true&employer=true" className={styles.navLink}>
             Employers
           </a>
           <a href="/pricing" className={styles.navLink}>
@@ -119,7 +119,7 @@ export function Navbar() {
               <a href="/dashboard" className={styles.mobileMenuLink} onClick={closeMobileMenu}>
                 My Resumes
               </a>
-              <a href="/employers" className={styles.mobileMenuLink} onClick={closeMobileMenu}>
+              <a href="/login?signup=true&employer=true" className={styles.mobileMenuLink} onClick={closeMobileMenu}>
                 Employers
               </a>
               <a href="/pricing" className={styles.mobileMenuLink} onClick={closeMobileMenu}>

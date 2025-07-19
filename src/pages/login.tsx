@@ -15,11 +15,19 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [isSignUp, setIsSignUp] = useState(false)
+  const [isEmployerSignup, setIsEmployerSignup] = useState(false)
+  const [companyName, setCompanyName] = useState('')
+  const [jobTitle, setJobTitle] = useState('')
 
   useEffect(() => {
     // Check if user came from "Get Started" button
     if (router.query.signup === 'true' || router.asPath.includes('signup')) {
       setIsSignUp(true)
+    }
+    // Check if user wants employer signup
+    if (router.query.employer === 'true') {
+      setIsSignUp(true)
+      setIsEmployerSignup(true)
     }
   }, [router])
 
@@ -40,6 +48,14 @@ export default function Login() {
           setError('Last name is required')
           return
         }
+        if (isEmployerSignup && !companyName.trim()) {
+          setError('Company name is required')
+          return
+        }
+        if (isEmployerSignup && !jobTitle.trim()) {
+          setError('Job title is required')
+          return
+        }
         if (password !== confirmPassword) {
           setError('Passwords do not match')
           return
@@ -56,13 +72,18 @@ export default function Login() {
             data: {
               full_name: `${firstName} ${lastName}`,
               first_name: firstName,
-              last_name: lastName
+              last_name: lastName,
+              ...(isEmployerSignup && {
+                company_name: companyName,
+                job_title: jobTitle,
+                user_type: 'employer'
+              })
             },
             emailRedirectTo: process.env.NEXT_PUBLIC_SITE_URL 
-              ? `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard`
+              ? `${process.env.NEXT_PUBLIC_SITE_URL}${isEmployerSignup ? '/recruiter-dashboard' : '/dashboard'}`
               : process.env.NODE_ENV === 'production'
-                ? 'https://www.realcv.app/dashboard'
-                : `${window.location.origin}/dashboard`
+                ? `https://www.realcv.app${isEmployerSignup ? '/recruiter-dashboard' : '/dashboard'}`
+                : `${window.location.origin}${isEmployerSignup ? '/recruiter-dashboard' : '/dashboard'}`
           }
         })
         
@@ -114,10 +135,10 @@ export default function Login() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-6 sm:p-8">
           <div className="text-center mb-6">
             <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">
-              {isSignUp ? 'Create Account' : 'Sign In'}
+              {isSignUp ? (isEmployerSignup ? 'Create Employer Account' : 'Create Account') : 'Sign In'}
             </h1>
             <p className="text-gray-600 text-sm sm:text-base">
-              {isSignUp ? 'Sign up for your RealCV account' : 'Welcome back to RealCV'}
+              {isSignUp ? (isEmployerSignup ? 'Create your employer account to start screening candidates' : 'Sign up for your RealCV account') : 'Welcome back to RealCV'}
             </p>
           </div>
 
@@ -209,12 +230,43 @@ export default function Login() {
               </div>
             )}
 
+            {isSignUp && isEmployerSignup && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Company Name
+                  </label>
+                  <input
+                    type="text"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter your company name"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Job Title
+                  </label>
+                  <input
+                    type="text"
+                    value={jobTitle}
+                    onChange={(e) => setJobTitle(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter your job title"
+                    required
+                  />
+                </div>
+              </>
+            )}
+
             <button
               type="submit"
               disabled={loading}
               className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? 'Please wait...' : (isSignUp ? 'Sign Up' : 'Sign In')}
+              {loading ? 'Please wait...' : (isSignUp ? (isEmployerSignup ? 'Create Employer Account' : 'Sign Up') : 'Sign In')}
             </button>
           </form>
 
@@ -222,6 +274,7 @@ export default function Login() {
             <button
               onClick={() => {
                 setIsSignUp(!isSignUp)
+                setIsEmployerSignup(false)
                 setError(null)
                 setSuccess(null)
                 setEmail('')
@@ -229,6 +282,8 @@ export default function Login() {
                 setConfirmPassword('')
                 setFirstName('')
                 setLastName('')
+                setCompanyName('')
+                setJobTitle('')
               }}
               className="text-blue-600 hover:text-blue-700 text-sm"
             >
@@ -242,7 +297,7 @@ export default function Login() {
           <div className="mt-4 text-center space-y-2">
             <div>
               <Link 
-                href="/employer-signup" 
+                href="/login?signup=true&employer=true" 
                 className="text-blue-600 hover:text-blue-700 text-sm font-medium"
               >
                 Are you hiring? Create Employer Account →
