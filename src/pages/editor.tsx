@@ -49,36 +49,53 @@ export default function ResumeEditor() {
   }
 
   const checkCanExportPDF = async (updateState = false): Promise<boolean> => {
+    console.log('🔍 checkCanExportPDF called with updateState:', updateState)
+    
     // First check local subscription
-    if (SubscriptionManager.canExportPDF()) {
+    const localCanExport = SubscriptionManager.canExportPDF()
+    console.log('📱 Local subscription check:', localCanExport)
+    
+    if (localCanExport) {
       if (updateState) setCanExportPDF(true)
+      console.log('✅ Local subscription active, returning true')
       return true
     }
 
     // Then check Stripe subscription for authenticated users
     try {
+      console.log('🔐 Checking Stripe subscription...')
       const { data: { user } } = await supabase.auth.getUser()
+      console.log('👤 User data:', user ? 'User found' : 'No user')
       
       if (user) {
         // Try to get customer ID from multiple sources
         let customerId = localStorage.getItem('stripe_customer_id') || user.user_metadata?.stripe_customer_id
+        console.log('💳 Customer ID:', customerId)
         
         if (customerId) {
+          console.log('🌐 Fetching billing history...')
           const response = await fetch(`/api/billing-history?customerId=${customerId}&limit=1`)
           const data = await response.json()
+          console.log('📊 Billing API response:', response.ok, data)
           
           if (response.ok && data.current_subscription) {
             // User has active Stripe subscription
             if (updateState) setCanExportPDF(true)
+            console.log('✅ Stripe subscription active, returning true')
             return true
+          } else {
+            console.log('❌ No active Stripe subscription found')
           }
+        } else {
+          console.log('❌ No customer ID found')
         }
       }
     } catch (error) {
-      console.log('Could not check Stripe subscription for export:', error)
+      console.log('❌ Error checking Stripe subscription:', error)
     }
 
     if (updateState) setCanExportPDF(false)
+    console.log('❌ No valid subscription found, returning false')
     return false
   }
 
@@ -154,6 +171,7 @@ export default function ResumeEditor() {
   // Load existing resume on mount
   useEffect(() => {
     const initializeEditor = async () => {
+      console.log('🚀 EDITOR LOADED - NEW VERSION WITH TXT/WORD FIX')
       setIsLoading(true)
       
       // Wait for router to be ready
@@ -423,10 +441,22 @@ export default function ResumeEditor() {
   }
 
   // TXT Export
-  const handleExportTXT = () => {
-    if (!SubscriptionManager.isSubscriptionActive()) {
-      router.push('/pricing');
-      return;
+  const handleExportTXT = async () => {
+    console.log('TXT Export function called!')
+    
+    // Use exact same logic as PDF export
+    if (!currentResumeId) {
+      setSaveMessage('Please save your resume first before exporting to TXT.')
+      setTimeout(() => setSaveMessage(''), 3000)
+      return
+    }
+
+    // Check subscription status (both local and Stripe) - exact same as PDF
+    const canExport = await checkCanExportPDF()
+    if (!canExport) {
+      setSaveMessage('TXT export requires RealCV Pro subscription.')
+      setTimeout(() => setSaveMessage(''), 3000)
+      return
     }
     let txt = `${resumeTitle}\n\n`;
     resumeSections.forEach((section, index) => {
@@ -569,9 +599,21 @@ export default function ResumeEditor() {
 
   // Word Export
   const handleExportWord = async () => {
-    if (!SubscriptionManager.isSubscriptionActive()) {
-      router.push('/pricing');
-      return;
+    console.log('Word Export function called!')
+    
+    // Use exact same logic as PDF export
+    if (!currentResumeId) {
+      setSaveMessage('Please save your resume first before exporting to Word.')
+      setTimeout(() => setSaveMessage(''), 3000)
+      return
+    }
+
+    // Check subscription status (both local and Stripe) - exact same as PDF
+    const canExport = await checkCanExportPDF()
+    if (!canExport) {
+      setSaveMessage('Word export requires RealCV Pro subscription.')
+      setTimeout(() => setSaveMessage(''), 3000)
+      return
     }
     setIsExporting(true);
     setSaveMessage('');
@@ -738,16 +780,26 @@ export default function ResumeEditor() {
                   Preview PDF
                 </button>
                 <button
-                  onClick={handleExportTXT}
+                  onClick={(e) => {
+                    console.log('🔥 TXT Export button clicked!', 'isExporting:', isExporting)
+                    e.preventDefault()
+                    e.stopPropagation()
+                    handleExportTXT()
+                  }}
                   className={`${styles.button} ${styles.buttonSecondary}`}
-                  disabled={isExporting}
+                  type="button"
                 >
                   Export as TXT
                 </button>
                 <button
-                  onClick={handleExportWord}
+                  onClick={(e) => {
+                    console.log('🔥 Word Export button clicked!', 'isExporting:', isExporting)
+                    e.preventDefault()
+                    e.stopPropagation()
+                    handleExportWord()
+                  }}
                   className={`${styles.button} ${styles.buttonSecondary}`}
-                  disabled={isExporting}
+                  type="button"
                 >
                   Export as Word
                 </button>
