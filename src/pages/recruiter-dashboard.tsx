@@ -24,15 +24,19 @@ export default function RecruiterDashboard() {
   useEffect(() => {
     // Check authentication
     const getUser = async () => {
+      console.log('🔍 Checking authentication...')
       const { data: { user } } = await supabase.auth.getUser()
+      console.log('👤 User:', user)
       setUser(user)
       setLoading(false)
       
       if (!user) {
+        console.log('❌ No user found, redirecting to login')
         router.push('/login?redirect=/recruiter-dashboard')
         return
       }
       
+      console.log('✅ User authenticated:', user.email)
       loadData(user.id)
     }
 
@@ -192,6 +196,7 @@ export default function RecruiterDashboard() {
     return '#ef4444'
   }
 
+  // Show loading while checking authentication
   if (loading) {
     return (
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px', fontFamily: 'system-ui', textAlign: 'center' }}>
@@ -199,19 +204,35 @@ export default function RecruiterDashboard() {
           <title>Recruiter Dashboard - RealCV</title>
         </Head>
         <h1>Loading...</h1>
-        <p>Please wait while we load your dashboard.</p>
+        <p>Checking authentication...</p>
       </div>
     )
   }
 
+  // Redirect to login if not authenticated
   if (!user) {
     return (
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px', fontFamily: 'system-ui', textAlign: 'center' }}>
         <Head>
           <title>Recruiter Dashboard - RealCV</title>
         </Head>
-        <h1>Authentication Required</h1>
-        <p>Please log in to access the recruiter dashboard.</p>
+        <h1>🔒 Authentication Required</h1>
+        <p>You need to log in to access the recruiter dashboard.</p>
+        <button
+          onClick={() => router.push('/login?redirect=/recruiter-dashboard')}
+          style={{
+            background: '#3b82f6',
+            color: 'white',
+            border: 'none',
+            padding: '12px 24px',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '16px',
+            marginTop: '16px'
+          }}
+        >
+          Go to Login
+        </button>
       </div>
     )
   }
