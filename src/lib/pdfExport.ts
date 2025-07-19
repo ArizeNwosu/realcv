@@ -69,7 +69,7 @@ export class PDFExporter {
     const plainText = tempDiv.textContent || tempDiv.innerText || ''
     
     // Split into lines and filter out empty ones
-    const lines = plainText
+    let lines = plainText
       .split('\n')
       .map(line => line.trim())
       .filter(line => line.length > 0)
@@ -80,6 +80,21 @@ export class PDFExporter {
       const cleanText = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
       if (cleanText.length > 0) {
         lines.push(cleanText)
+      }
+    }
+    
+    // Special handling for bullet points that are all on one line (like Activities section)
+    if (lines.length === 1 && lines[0].includes('•')) {
+      const line = lines[0]
+      // Split on bullet points and clean up
+      const bulletItems = line.split('•').map(item => item.trim()).filter(item => item.length > 0)
+      if (bulletItems.length > 1) {
+        // Convert back to separate bullet lines
+        lines = bulletItems.map(item => `• ${item}`)
+        
+        if (html.includes('Presidential Medal')) {
+          console.log('ACTIVITIES DEBUG - Converted to', lines.length, 'bullet lines:', lines)
+        }
       }
     }
 
