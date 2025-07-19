@@ -468,8 +468,11 @@ export default function ResponsePage({ questionSet: initialQuestionSet, error: i
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const { token } = context.params!
+  
+  console.log('🏗️ SSR: getServerSideProps called for token:', token)
 
   if (!token || typeof token !== 'string') {
+    console.log('❌ SSR: Invalid token provided')
     return {
       props: {
         questionSet: null,
@@ -479,11 +482,16 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   }
 
   try {
+    console.log('🔍 SSR: Importing ResponsePortalManager...')
     // Import and use the manager directly on server side
     const { ResponsePortalManager } = await import('../../lib/responsePortal')
+    console.log('✅ SSR: ResponsePortalManager imported successfully')
+    
+    console.log('🔍 SSR: Looking for question set with token:', token)
     const questionSet = ResponsePortalManager.getQuestionSetByToken(token)
     
     if (!questionSet) {
+      console.log('❌ SSR: Question set not found, will try client-side')
       // Don't return error here, let client-side try localStorage
       return {
         props: {
@@ -492,13 +500,14 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       }
     }
 
+    console.log('✅ SSR: Found question set:', questionSet.title)
     return {
       props: {
         questionSet
       }
     }
   } catch (error) {
-    console.error('Error fetching question set:', error)
+    console.error('❌ SSR: Error in getServerSideProps:', error)
     return {
       props: {
         questionSet: null
