@@ -67,7 +67,8 @@ export class PDFExporter {
     
     // Simplified approach: get plain text and split by natural breaks
     const plainText = tempDiv.textContent || tempDiv.innerText || ''
-    console.log('PDF Export Debug - Plain text:', plainText)
+    console.log('PDF Export Debug - Plain text for content:', plainText)
+    console.log('PDF Export Debug - Raw HTML:', html)
     
     // Split into lines and filter out empty ones
     const lines = plainText
@@ -75,7 +76,19 @@ export class PDFExporter {
       .map(line => line.trim())
       .filter(line => line.length > 0)
     
+    // If we still have no content but HTML exists, try a different approach
+    if (lines.length === 0 && html.trim().length > 0) {
+      console.log('PDF Export Debug - No text extracted, trying alternative method')
+      // Remove HTML tags and get text
+      const cleanText = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+      if (cleanText.length > 0) {
+        lines.push(cleanText)
+        console.log('PDF Export Debug - Alternative extraction result:', cleanText)
+      }
+    }
+    
     console.log('PDF Export Debug - Processed lines:', lines)
+    console.log('PDF Export Debug - Number of lines after filtering:', lines.length)
 
     // Render each line
     for (const line of lines) {
@@ -153,6 +166,9 @@ export class PDFExporter {
         pdf.addPage()
         yPosition = margin
       }
+      
+      // Add section-specific debugging
+      console.log('PDF Export - Processing section:', section.title, 'Content length:', section.content.length)
       
       // Render formatted content directly
       yPosition = this.renderFormattedText(section.content, pdf, margin, yPosition, contentWidth)
