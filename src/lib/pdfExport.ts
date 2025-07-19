@@ -67,8 +67,6 @@ export class PDFExporter {
     
     // Simplified approach: get plain text and split by natural breaks
     const plainText = tempDiv.textContent || tempDiv.innerText || ''
-    console.log('PDF Export Debug - Plain text for content:', plainText)
-    console.log('PDF Export Debug - Raw HTML:', html)
     
     // Split into lines and filter out empty ones
     const lines = plainText
@@ -78,17 +76,12 @@ export class PDFExporter {
     
     // If we still have no content but HTML exists, try a different approach
     if (lines.length === 0 && html.trim().length > 0) {
-      console.log('PDF Export Debug - No text extracted, trying alternative method')
       // Remove HTML tags and get text
       const cleanText = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
       if (cleanText.length > 0) {
         lines.push(cleanText)
-        console.log('PDF Export Debug - Alternative extraction result:', cleanText)
       }
     }
-    
-    console.log('PDF Export Debug - Processed lines:', lines)
-    console.log('PDF Export Debug - Number of lines after filtering:', lines.length)
 
     // Render each line
     for (const line of lines) {
@@ -155,8 +148,7 @@ export class PDFExporter {
       // Add underline
       const titleWidth = pdf.getTextWidth(sectionTitle)
       pdf.line(margin, yPosition + 1, margin + titleWidth, yPosition + 1)
-      const yAfterTitle = yPosition + 2 // More aggressive spacing reduction after section title
-      console.log('PDF Export - Section:', section.title, 'Y after title:', yAfterTitle)
+      const yAfterTitle = yPosition + 1 // Minimal spacing after section title
       yPosition = yAfterTitle
       
       // Section content with formatting
@@ -169,16 +161,9 @@ export class PDFExporter {
         yPosition = margin
       }
       
-      // Add section-specific debugging
-      console.log('PDF Export - Processing section:', section.title, 'Content length:', section.content.length)
-      
       // Render formatted content directly
-      const yBeforeContent = yPosition
-      console.log('PDF Export - Section:', section.title, 'Y before content:', yBeforeContent)
       yPosition = this.renderFormattedText(section.content, pdf, margin, yPosition, contentWidth)
-      const yAfterContent = yPosition + 3 // Reduced spacing after section content
-      console.log('PDF Export - Section:', section.title, 'Y after content:', yAfterContent, 'Content height:', yAfterContent - yBeforeContent)
-      yPosition = yAfterContent
+      yPosition += 1 // Minimal spacing after section content
       
       // Add line divider between sections (except for the last section)
       const isLastSection = sections.indexOf(section) === sections.length - 1
