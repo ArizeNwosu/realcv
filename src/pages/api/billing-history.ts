@@ -112,17 +112,61 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.log('🔧 Full activeSubscription keys:', Object.keys(activeSubscription))
     }
     
-    const currentSubscription = activeSubscription ? {
-      id: activeSubscription.id,
-      status: activeSubscription.status,
-      current_period_start: activeSubscription.current_period_start,
-      current_period_end: activeSubscription.current_period_end,
-      cancel_at_period_end: activeSubscription.cancel_at_period_end,
-      plan: activeSubscription.items.data[0]?.price?.id === 'price_1RlOB0Av3wDYpeRLJuzDvg9r' ? 'pro' : 'free',
-      amount: activeSubscription.items.data[0]?.price?.unit_amount || 0,
-      currency: activeSubscription.items.data[0]?.price?.currency || 'usd',
-      interval: activeSubscription.items.data[0]?.price?.recurring?.interval || 'month'
-    } : null
+    const currentSubscription = activeSubscription ? (() => {
+      // If Stripe doesn't provide period dates, calculate them from created date
+      let periodStart = activeSubscription.current_period_start
+      let periodEnd = activeSubscription.current_period_end
+      
+      // Fallback calculation if period dates are missing
+      if (!periodStart || !periodEnd) {
+        console.log('⚠️ Period dates missing from Stripe, calculating from created date')
+        const createdDate = activeSubscription.created
+        const interval = activeSubscription.items.data[0]?.price?.recurring?.interval || 'month'
+        
+        // Calculate how many billing periods have passed since creation
+        const now = Math.floor(Date.now() / 1000)
+        const daysSinceCreation = Math.floor((now - createdDate) / (24 * 60 * 60))
+        
+        if (interval === 'month') {
+          // For monthly subscriptions, find the current billing period
+          const createdDateObj = new Date(createdDate * 1000)
+          const currentDate = new Date()
+          
+          // Find the current period start (same day of month)
+          let currentPeriodStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), createdDateObj.getDate())
+          
+          // If we haven't reached the billing day this month, use last month
+          if (currentPeriodStart > currentDate) {
+            currentPeriodStart = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, createdDateObj.getDate())
+          }
+          
+          // Next billing date is same day next month
+          const nextPeriodEnd = new Date(currentPeriodStart.getFullYear(), currentPeriodStart.getMonth() + 1, createdDateObj.getDate())
+          
+          periodStart = Math.floor(currentPeriodStart.getTime() / 1000)
+          periodEnd = Math.floor(nextPeriodEnd.getTime() / 1000)
+          
+          console.log('📅 Calculated monthly billing period:', {
+            start: currentPeriodStart.toLocaleDateString(),
+            end: nextPeriodEnd.toLocaleDateString(),
+            periodStart,
+            periodEnd
+          })
+        }
+      }
+      
+      return {
+        id: activeSubscription.id,
+        status: activeSubscription.status,
+        current_period_start: periodStart,
+        current_period_end: periodEnd,
+        cancel_at_period_end: activeSubscription.cancel_at_period_end,
+        plan: activeSubscription.items.data[0]?.price?.id === 'price_1RlOB0Av3wDYpeRLJuzDvg9r' ? 'pro' : 'free',
+        amount: activeSubscription.items.data[0]?.price?.unit_amount || 0,
+        currency: activeSubscription.items.data[0]?.price?.currency || 'usd',
+        interval: activeSubscription.items.data[0]?.price?.recurring?.interval || 'month'
+      }
+    })() : null
 
     console.log('📊 Current subscription:', currentSubscription ? currentSubscription.id : 'none')
     console.log('🔍 Current subscription details:', currentSubscription)
