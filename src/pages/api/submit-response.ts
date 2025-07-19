@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next'
+import { DatabaseManager } from '../../lib/database'
 import { ResponsePortalManager, TypingSession } from '../../lib/responsePortal'
 
 interface SubmissionRequest {
@@ -14,7 +15,7 @@ interface SubmissionRequest {
   candidateLastName?: string
 }
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
@@ -33,7 +34,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     }
 
     // Validate token exists
-    const questionSet = ResponsePortalManager.getQuestionSetByToken(token)
+    const questionSet = await DatabaseManager.getQuestionSetByToken(token)
     if (!questionSet) {
       return res.status(404).json({ error: 'Invalid or expired token' })
     }
@@ -80,7 +81,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     }
 
     // Submit the response
-    const submission = ResponsePortalManager.submitResponse(
+    const submission = await DatabaseManager.submitResponse(
       token,
       processedResponses,
       clientInfo

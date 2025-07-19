@@ -1,13 +1,19 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
-import { ResponsePortalManager, QuestionSet, CandidateSubmission } from '../lib/responsePortal'
+import { useRouter } from 'next/router'
+import { supabase } from '../lib/supabase'
+import { User } from '@supabase/supabase-js'
+import { DatabaseManager } from '../lib/database'
+import { QuestionSet, CandidateSubmission } from '../lib/responsePortal'
 
 export default function RecruiterDashboard() {
+  const router = useRouter()
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
   const [questionSets, setQuestionSets] = useState<QuestionSet[]>([])
   const [submissions, setSubmissions] = useState<CandidateSubmission[]>([])
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [editingSet, setEditingSet] = useState<QuestionSet | null>(null)
-  const [showDebugInfo, setShowDebugInfo] = useState(false)
   const [title, setTitle] = useState('Software Engineer Follow-up Questions')
   const [questions, setQuestions] = useState([
     'Describe a challenging technical problem you solved recently and walk me through your approach.',
@@ -16,45 +22,57 @@ export default function RecruiterDashboard() {
   ])
 
   useEffect(() => {
-    loadData()
+    // Check authentication
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+      setLoading(false)
+      
+      if (!user) {
+        router.push('/login?redirect=/recruiter-dashboard')
+        return
+      }
+      
+      loadData(user.id)
+    }
+
+    getUser()
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user || null)
+        if (!session?.user) {
+          router.push('/login?redirect=/recruiter-dashboard')
+        } else {
+          loadData(session.user.id)
+        }
+      }
+    )
+
+    return () => subscription.unsubscribe()
   }, [])
 
-  const loadData = () => {
-    // Get both client-side and demo question sets
-    const allQuestionSets = ResponsePortalManager.getAllQuestionSets()
-    
-    // Always include the demo question set in the dashboard
-    const demoQuestionSet = {
-      id: 'demo_qs_1',
-      token: 'resp_demo123',
-      title: 'Demo Software Engineer Questions',
-      questions: [
-        {
-          id: 'demo_q_1',
-          text: 'Describe a challenging technical problem you solved recently and walk me through your approach.',
-          order: 1
-        },
-        {
-          id: 'demo_q_2', 
-          text: 'How do you stay current with new technologies and programming trends?',
-          order: 2
-        }
-      ],
-      createdBy: 'demo@realcv.com',
-      createdAt: Date.now() - 3600000, // 1 hour ago
-      expiresAt: Date.now() + (48 * 60 * 60 * 1000), // 48 hours from now
-      isActive: true
+  const loadData = async (employerId: string) => {
+    try {
+      // Load employer's question sets from database
+      const employerQuestionSets = await DatabaseManager.getQuestionSetsByEmployer(employerId)
+      setQuestionSets(employerQuestionSets)
+      
+      // Load employer's submissions from database
+      const employerSubmissions = await DatabaseManager.getSubmissionsByEmployer(employerId)
+      setSubmissions(employerSubmissions)
+    } catch (error) {
+      console.error('Error loading data:', error)
     }
-    
-    // Check if demo already exists in the list to avoid duplicates
-    const hasDemo = allQuestionSets.some(qs => qs.token === 'resp_demo123')
-    const finalQuestionSets = hasDemo ? allQuestionSets : [demoQuestionSet, ...allQuestionSets]
-    
-    setQuestionSets(finalQuestionSets)
-    setSubmissions(ResponsePortalManager.getAllSubmissions())
   }
 
-  const createQuestionSet = () => {
+  const createQuestionSet = async () => {
+    if (!user) {
+      alert('You must be logged in to create question sets')
+      return
+    }
+
     const questionData = questions
       .filter(q => q.trim())
       .map((text, index) => ({ text: text.trim(), order: index + 1 }))
@@ -64,17 +82,23 @@ export default function RecruiterDashboard() {
       return
     }
 
-    const questionSet = ResponsePortalManager.createQuestionSet(
-      title,
-      questionData,
-      'recruiter@realcv.com',
-      48 // 48 hours expiry
-    )
+    try {
+      const questionSet = await DatabaseManager.createQuestionSet(
+        title,
+        questionData,
+        user.id,
+        user.email || 'unknown@email.com',
+        48 // 48 hours expiry
+      )
 
-    resetForm()
-    loadData()
+      resetForm()
+      loadData(user.id)
 
-    alert(`Question set created! Share this URL with candidates:\n${window.location.origin}/respond/${questionSet.token}`)
+      alert(`Question set created! Share this URL with candidates:\n${window.location.origin}/respond/${questionSet.token}`)
+    } catch (error) {
+      console.error('Error creating question set:', error)
+      alert('Failed to create question set. Please try again.')
+    }
   }
 
   const startEdit = (questionSet: QuestionSet) => {
@@ -168,6 +192,30 @@ export default function RecruiterDashboard() {
     return '#ef4444'
   }
 
+  if (loading) {
+    return (
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px', fontFamily: 'system-ui', textAlign: 'center' }}>
+        <Head>
+          <title>Recruiter Dashboard - RealCV</title>
+        </Head>
+        <h1>Loading...</h1>
+        <p>Please wait while we load your dashboard.</p>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px', fontFamily: 'system-ui', textAlign: 'center' }}>
+        <Head>
+          <title>Recruiter Dashboard - RealCV</title>
+        </Head>
+        <h1>Authentication Required</h1>
+        <p>Please log in to access the recruiter dashboard.</p>
+      </div>
+    )
+  }
+
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px', fontFamily: 'system-ui' }}>
       <Head>
@@ -179,13 +227,7 @@ export default function RecruiterDashboard() {
         <p style={{ color: '#6b7280', margin: '0 0 16px 0' }}>Create question sets for candidates and view their responses with human verification scores.</p>
         
         <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px', padding: '12px', marginBottom: '16px' }}>
-          <strong>🎯 Quick Test:</strong> Try the demo question set:{' '}
-          <button
-            onClick={() => copyUrl('resp_demo123')}
-            style={{ background: '#10b981', color: 'white', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
-          >
-            Copy Demo Link
-          </button>
+          <strong>👋 Welcome, {user.email}!</strong> You can create question sets and share them with candidates to receive verified human responses.
         </div>
         
         <button
@@ -204,21 +246,6 @@ export default function RecruiterDashboard() {
           {showCreateForm ? 'Cancel' : '+ Create Question Set'}
         </button>
         
-        <button
-          onClick={() => setShowDebugInfo(!showDebugInfo)}
-          style={{
-            background: '#f59e0b',
-            color: 'white',
-            border: 'none',
-            padding: '12px 24px',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontSize: '16px',
-            marginRight: '8px'
-          }}
-        >
-          {showDebugInfo ? 'Hide Debug' : 'Show Debug Info'}
-        </button>
         
         {showCreateForm && (
           <button
@@ -301,39 +328,6 @@ export default function RecruiterDashboard() {
         </div>
       )}
 
-      {showDebugInfo && (
-        <div style={{ background: 'white', borderRadius: '12px', padding: '24px', marginBottom: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-          <h2 style={{ margin: '0 0 16px 0', color: '#111827' }}>Debug Information</h2>
-          
-          <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '8px', fontFamily: 'monospace', fontSize: '12px' }}>
-            <h3 style={{ margin: '0 0 8px 0' }}>localStorage Contents:</h3>
-            <div style={{ marginBottom: '16px' }}>
-              <strong>Question Sets:</strong>
-              <pre style={{ background: 'white', padding: '8px', borderRadius: '4px', margin: '4px 0', overflow: 'auto' }}>
-                {JSON.stringify(JSON.parse(localStorage.getItem('realcv_question_sets') || '[]'), null, 2)}
-              </pre>
-            </div>
-            
-            <div style={{ marginBottom: '16px' }}>
-              <strong>Available Tokens:</strong>
-              <pre style={{ background: 'white', padding: '8px', borderRadius: '4px', margin: '4px 0' }}>
-                {questionSets.map(qs => qs.token).join('\n')}
-              </pre>
-            </div>
-            
-            <div style={{ marginBottom: '16px' }}>
-              <strong>Test Token (resp_8cjmrg62tmimdas7bg3):</strong>
-              <pre style={{ background: 'white', padding: '8px', borderRadius: '4px', margin: '4px 0' }}>
-                {JSON.stringify(ResponsePortalManager.getQuestionSetByToken('resp_8cjmrg62tmimdas7bg3'), null, 2)}
-              </pre>
-            </div>
-
-            <div style={{ marginBottom: '16px' }}>
-              <strong>Current Domain:</strong> {window.location.hostname}
-            </div>
-          </div>
-        </div>
-      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
         {/* Question Sets */}

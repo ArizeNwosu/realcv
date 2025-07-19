@@ -22,36 +22,7 @@ export default function ResponsePage({ questionSet: initialQuestionSet, error: i
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(initialError || null)
 
-  // Force client-side loading regardless of SSR result
-  useEffect(() => {
-    console.log('🔄 useEffect running, router.query:', router.query)
-    if (router.query.token && typeof router.query.token === 'string' && !questionSet) {
-      const token = router.query.token
-      console.log('🔍 Client-side: Looking for token:', token)
-      setLoading(true)
-      
-      try {
-        const allQuestionSets = JSON.parse(localStorage.getItem('realcv_question_sets') || '[]')
-        console.log('📦 Raw localStorage question sets:', allQuestionSets)
-        
-        const foundQs = allQuestionSets.find((qs: any) => qs.token === token)
-        console.log('🎯 Direct localStorage lookup result:', foundQs)
-        
-        if (foundQs) {
-          console.log('✅ Found in localStorage, setting question set')
-          setQuestionSet(foundQs)
-          setError(null)
-        } else {
-          console.log('❌ Not found in localStorage')
-          setError(`Question set not found. Token: ${token}`)
-        }
-      } catch (err) {
-        console.error('❌ Error:', err)
-        setError('Failed to load question set')
-      }
-      setLoading(false)
-    }
-  }, [router.query.token])
+  // No longer need client-side fallback since we're using database
   const [responses, setResponses] = useState<ResponseState>({})
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -483,20 +454,19 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   }
 
   try {
-    console.log('🔍 SSR: Importing ResponsePortalManager...')
-    // Import and use the manager directly on server side
-    const { ResponsePortalManager } = await import('../../lib/responsePortal')
-    console.log('✅ SSR: ResponsePortalManager imported successfully')
+    console.log('🔍 SSR: Importing DatabaseManager...')
+    const { DatabaseManager } = await import('../../lib/database')
+    console.log('✅ SSR: DatabaseManager imported successfully')
     
     console.log('🔍 SSR: Looking for question set with token:', token)
-    const questionSet = ResponsePortalManager.getQuestionSetByToken(token)
+    const questionSet = await DatabaseManager.getQuestionSetByToken(token)
     
     if (!questionSet) {
-      console.log('❌ SSR: Question set not found, will try client-side')
-      // Don't return error here, let client-side try localStorage
+      console.log('❌ SSR: Question set not found in database')
       return {
         props: {
-          questionSet: null
+          questionSet: null,
+          error: 'Question set not found or expired'
         }
       }
     }
@@ -511,7 +481,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     console.error('❌ SSR: Error in getServerSideProps:', error)
     return {
       props: {
-        questionSet: null
+        questionSet: null,
+        error: 'Failed to load question set'
       }
     }
   }
