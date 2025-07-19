@@ -59,209 +59,150 @@ export class PDFExporter {
   }
 
   static renderFormattedText(html: string, pdf: any, x: number, startY: number, maxWidth: number): number {
-    // Convert HTML to formatted text and render directly
-    const parser = new DOMParser()
-    const doc = parser.parseFromString(`<div>${html}</div>`, 'text/html')
-    const container = doc.querySelector('div')
-    
     let currentY = startY
     
-    const processElement = (element: Element, indent = 0): void => {
-      const tagName = element.tagName.toLowerCase()
-      
-      if (tagName === 'ul' || tagName === 'ol') {
-        // Handle lists
-        let itemIndex = 1
-        for (const li of Array.from(element.children)) {
-          if (li.tagName.toLowerCase() === 'li') {
-            const bullet = tagName === 'ul' ? '• ' : `${itemIndex}. `
-            const listItemText = li.textContent?.trim() || ''
+    // Simple but reliable approach: extract text and ensure nothing is missing
+    const tempDiv = document.createElement('div')
+    tempDiv.innerHTML = html
+    
+    // Process line by line to ensure all content is captured
+    const processNode = (node: Node, currentX = x): void => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const text = node.textContent?.trim()
+        if (text) {
+          // Handle text content - split into lines if needed
+          const lines = pdf.splitTextToSize(text, maxWidth - (currentX - x))
+          for (let i = 0; i < lines.length; i++) {
+            pdf.text(lines[i], currentX, currentY)
+            if (i < lines.length - 1) {
+              currentY += 5
+              currentX = x // Reset to left margin
+            }
+          }
+        }
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        const element = node as HTMLElement
+        const tagName = element.tagName?.toLowerCase()
+        
+        // Handle different HTML elements
+        switch (tagName) {
+          case 'br':
+            currentY += 5
+            break
             
-            if (listItemText) {
-              // Render bullet/number
-              pdf.setFont('helvetica', 'normal')
-              pdf.text(bullet, x + indent, currentY)
+          case 'div':
+            // Treat divs as line breaks
+            if (element.textContent?.trim()) {
+              const text = element.textContent.trim()
+              const lines = pdf.splitTextToSize(text, maxWidth)
+              for (const line of lines) {
+                pdf.text(line, x, currentY)
+                currentY += 5
+              }
+              currentY += 2 // Small spacing after div
+            }
+            break
+            
+          case 'p':
+            // Handle paragraphs
+            if (element.textContent?.trim()) {
+              const text = element.textContent.trim()
+              const lines = pdf.splitTextToSize(text, maxWidth)
+              for (const line of lines) {
+                pdf.text(line, x, currentY)
+                currentY += 5
+              }
+              currentY += 3 // Paragraph spacing
+            }
+            break
+            
+          case 'ul':
+          case 'ol':
+            // Handle lists
+            const listItems = element.querySelectorAll('li')
+            let itemIndex = 1
+            
+            listItems.forEach(li => {
+              const bullet = tagName === 'ul' ? '• ' : `${itemIndex}. `
+              const text = li.textContent?.trim()
               
-              // Check for formatting within list item
-              const strongElements = li.querySelectorAll('strong, b')
-              const emElements = li.querySelectorAll('em, i')
-              const uElements = li.querySelectorAll('u')
-              
-              if (strongElements.length > 0 || emElements.length > 0 || uElements.length > 0) {
-                // Has formatting - process each text node
-                let remainingText = listItemText
-                let currentX = x + indent + pdf.getTextWidth(bullet)
+              if (text) {
+                // Render bullet
+                pdf.text(bullet, x, currentY)
                 
-                const processFormattedText = (node: Node): void => {
-                  if (node.nodeType === Node.TEXT_NODE) {
-                    const text = node.textContent?.trim()
-                    if (text) {
-                      pdf.text(text, currentX, currentY)
-                      currentX += pdf.getTextWidth(text)
-                    }
-                  } else if (node.nodeType === Node.ELEMENT_NODE) {
-                    const elem = node as Element
-                    const text = elem.textContent?.trim()
-                    if (text) {
-                      switch (elem.tagName.toLowerCase()) {
-                        case 'strong':
-                        case 'b':
-                          pdf.setFont('helvetica', 'bold')
-                          break
-                        case 'em':
-                        case 'i':
-                          pdf.setFont('helvetica', 'italic')
-                          break
-                        case 'u':
-                          pdf.setFont('helvetica', 'normal')
-                          pdf.text(text, currentX, currentY)
-                          pdf.line(currentX, currentY + 1, currentX + pdf.getTextWidth(text), currentY + 1)
-                          currentX += pdf.getTextWidth(text)
-                          return
-                        default:
-                          pdf.setFont('helvetica', 'normal')
-                          break
-                      }
-                      pdf.text(text, currentX, currentY)
-                      currentX += pdf.getTextWidth(text)
-                      pdf.setFont('helvetica', 'normal')
-                    }
-                  }
-                }
+                // Render text with proper indentation
+                const bulletWidth = pdf.getTextWidth(bullet + ' ')
+                const lines = pdf.splitTextToSize(text, maxWidth - bulletWidth)
                 
-                for (const child of Array.from(li.childNodes)) {
-                  processFormattedText(child)
-                }
-              } else {
-                // No formatting - render as plain text
-                const lines = pdf.splitTextToSize(listItemText, maxWidth - indent - pdf.getTextWidth(bullet))
                 for (let i = 0; i < lines.length; i++) {
-                  pdf.text(lines[i], x + indent + (i === 0 ? pdf.getTextWidth(bullet) : pdf.getTextWidth('   ')), currentY)
+                  const lineX = x + (i === 0 ? bulletWidth : bulletWidth)
+                  pdf.text(lines[i], lineX, currentY)
                   if (i < lines.length - 1) currentY += 5
                 }
+                
+                currentY += 6
+                itemIndex++
               }
-              
-              currentY += 6
-              itemIndex++
-            }
-          }
-        }
-        currentY += 3
-      } else if (tagName === 'p') {
-        // Handle paragraphs with mixed formatting
-        const paragraphText = element.textContent?.trim() || ''
-        if (paragraphText) {
-          const strongElements = element.querySelectorAll('strong, b')
-          const emElements = element.querySelectorAll('em, i')
-          const uElements = element.querySelectorAll('u')
-          
-          if (strongElements.length > 0 || emElements.length > 0 || uElements.length > 0) {
-            // Has formatting - process each text node
-            let currentX = x
+            })
+            currentY += 3
+            break
             
-            const processFormattedText = (node: Node): void => {
-              if (node.nodeType === Node.TEXT_NODE) {
-                const text = node.textContent?.trim()
-                if (text) {
-                  // Handle line wrapping
-                  const lines = pdf.splitTextToSize(text, maxWidth - (currentX - x))
-                  for (let i = 0; i < lines.length; i++) {
-                    pdf.text(lines[i], currentX, currentY)
-                    if (i < lines.length - 1) {
-                      currentY += 5
-                      currentX = x // Reset to left margin on new line
-                    } else {
-                      currentX += pdf.getTextWidth(lines[i])
-                    }
-                  }
-                }
-              } else if (node.nodeType === Node.ELEMENT_NODE) {
-                const elem = node as Element
-                const text = elem.textContent?.trim()
-                if (text) {
-                  switch (elem.tagName.toLowerCase()) {
-                    case 'strong':
-                    case 'b':
-                      pdf.setFont('helvetica', 'bold')
-                      break
-                    case 'em':
-                    case 'i':
-                      pdf.setFont('helvetica', 'italic')
-                      break
-                    case 'u':
-                      pdf.setFont('helvetica', 'normal')
-                      const lines = pdf.splitTextToSize(text, maxWidth - (currentX - x))
-                      for (let i = 0; i < lines.length; i++) {
-                        pdf.text(lines[i], currentX, currentY)
-                        pdf.line(currentX, currentY + 1, currentX + pdf.getTextWidth(lines[i]), currentY + 1)
-                        if (i < lines.length - 1) {
-                          currentY += 5
-                          currentX = x
-                        } else {
-                          currentX += pdf.getTextWidth(lines[i])
-                        }
-                      }
-                      return
-                    default:
-                      pdf.setFont('helvetica', 'normal')
-                      break
-                  }
-                  
-                  const lines = pdf.splitTextToSize(text, maxWidth - (currentX - x))
-                  for (let i = 0; i < lines.length; i++) {
-                    pdf.text(lines[i], currentX, currentY)
-                    if (i < lines.length - 1) {
-                      currentY += 5
-                      currentX = x
-                    } else {
-                      currentX += pdf.getTextWidth(lines[i])
-                    }
-                  }
-                  pdf.setFont('helvetica', 'normal')
-                }
+          case 'strong':
+          case 'b':
+            pdf.setFont('helvetica', 'bold')
+            if (element.textContent?.trim()) {
+              const text = element.textContent.trim()
+              const lines = pdf.splitTextToSize(text, maxWidth - (currentX - x))
+              for (const line of lines) {
+                pdf.text(line, currentX, currentY)
+                currentX += pdf.getTextWidth(line)
               }
             }
+            pdf.setFont('helvetica', 'normal')
+            break
             
+          case 'em':
+          case 'i':
+            pdf.setFont('helvetica', 'italic')
+            if (element.textContent?.trim()) {
+              const text = element.textContent.trim()
+              const lines = pdf.splitTextToSize(text, maxWidth - (currentX - x))
+              for (const line of lines) {
+                pdf.text(line, currentX, currentY)
+                currentX += pdf.getTextWidth(line)
+              }
+            }
+            pdf.setFont('helvetica', 'normal')
+            break
+            
+          default:
+            // For other elements, just process their children
             for (const child of Array.from(element.childNodes)) {
-              processFormattedText(child)
+              processNode(child, currentX)
             }
-          } else {
-            // No formatting - render as plain text
-            const lines = pdf.splitTextToSize(paragraphText, maxWidth)
-            for (const line of lines) {
-              pdf.text(line, x, currentY)
-              currentY += 5
-            }
-          }
-          currentY += 3
-        }
-      } else {
-        // Handle other elements recursively
-        for (const child of Array.from(element.children)) {
-          processElement(child, indent)
+            break
         }
       }
     }
     
-    if (container) {
-      // First try to process as formatted content
-      const hasLists = container.querySelector('ul, ol')
-      const hasParagraphs = container.querySelector('p')
-      
-      if (hasLists || hasParagraphs) {
-        for (const child of Array.from(container.children)) {
-          processElement(child)
-        }
-      } else {
-        // Fallback for plain text with inline formatting
-        const text = container.textContent?.trim() || ''
-        if (text) {
-          const lines = pdf.splitTextToSize(text, maxWidth)
-          for (const line of lines) {
-            pdf.text(line, x, currentY)
+    // If it's a simple text content without complex HTML, just render as text
+    const textContent = tempDiv.textContent?.trim()
+    if (textContent && (!html.includes('<') || html.includes('<br'))) {
+      // Simple text or just line breaks
+      const lines = textContent.split('\n').filter(line => line.trim())
+      for (const line of lines) {
+        if (line.trim()) {
+          const wrappedLines = pdf.splitTextToSize(line.trim(), maxWidth)
+          for (const wrappedLine of wrappedLines) {
+            pdf.text(wrappedLine, x, currentY)
             currentY += 5
           }
         }
+      }
+    } else {
+      // Process HTML structure
+      for (const child of Array.from(tempDiv.childNodes)) {
+        processNode(child)
       }
     }
     
