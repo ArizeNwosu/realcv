@@ -113,6 +113,14 @@ export default function Profile() {
       if (response.ok) {
         setBillingData(data)
         console.log('✅ Billing data loaded successfully')
+        console.log('📊 Full billing data response:', data)
+        if (data.current_subscription) {
+          console.log('💰 Current subscription details:', data.current_subscription)
+          console.log('📅 Period start raw:', data.current_subscription.current_period_start, 'type:', typeof data.current_subscription.current_period_start)
+          console.log('📅 Period end raw:', data.current_subscription.current_period_end, 'type:', typeof data.current_subscription.current_period_end)
+        } else {
+          console.log('❌ No current_subscription in response')
+        }
       } else {
         console.error('❌ Billing API error:', data)
         setBillingError(data.error || data.message || 'Failed to load billing data')

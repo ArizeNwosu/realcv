@@ -61,6 +61,12 @@ export default function Subscription() {
         const data = await response.json()
         
         if (response.ok) {
+          console.log('📊 Raw billing data:', data)
+          if (data.current_subscription) {
+            console.log('💰 Current subscription:', data.current_subscription)
+            console.log('📅 Start:', data.current_subscription.current_period_start, 'End:', data.current_subscription.current_period_end)
+          }
+          
           // Transform billing-history response to match subscription-status format
           const transformedData = {
             subscription: data.current_subscription,
@@ -68,6 +74,7 @@ export default function Subscription() {
             plan: data.current_subscription?.plan || 'free'
           }
           setSubscriptionData(transformedData)
+          console.log('🔄 Transformed subscription data:', transformedData)
         } else {
           setError(data.message || 'Failed to load subscription data')
         }
