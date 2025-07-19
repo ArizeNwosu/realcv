@@ -65,117 +65,24 @@ export class PDFExporter {
     const tempDiv = document.createElement('div')
     tempDiv.innerHTML = html
     
-    // Get all text content with proper line breaks
-    const getText = (element: Element): string[] => {
-      const lines: string[] = []
-      
-      const processElement = (el: Element | Node): void => {
-        if (el.nodeType === Node.TEXT_NODE) {
-          const text = el.textContent?.trim()
-          if (text) {
-            lines.push(text)
-          }
-        } else if (el.nodeType === Node.ELEMENT_NODE) {
-          const element = el as Element
-          const tagName = element.tagName?.toLowerCase()
-          
-          switch (tagName) {
-            case 'br':
-              lines.push('')
-              break
-              
-            case 'p':
-              // Process paragraph content - no extra line breaks
-              const pText = element.textContent?.trim()
-              if (pText) {
-                lines.push(pText)
-              }
-              break
-              
-            case 'div':
-              // For divs, process children but don't add extra line breaks
-              Array.from(element.childNodes).forEach(child => {
-                processElement(child)
-              })
-              break
-              
-            case 'ul':
-            case 'ol':
-              const listItems = element.querySelectorAll('li')
-              listItems.forEach((li, index) => {
-                const bullet = tagName === 'ul' ? '• ' : `${index + 1}. `
-                const text = li.textContent?.trim()
-                if (text) {
-                  lines.push(bullet + text)
-                }
-              })
-              break
-              
-            case 'strong':
-            case 'b':
-            case 'em':
-            case 'i':
-              // For formatting tags, just get the text content
-              const formattedText = element.textContent?.trim()
-              if (formattedText) {
-                lines.push(formattedText)
-              }
-              break
-              
-            default:
-              // Process children for other elements
-              Array.from(element.childNodes).forEach(child => {
-                processElement(child)
-              })
-              break
-          }
-        }
-      }
-      
-      Array.from(element.childNodes).forEach(child => {
-        processElement(child)
-      })
-      
-      return lines
-    }
+    // Simplified approach: get plain text and split by natural breaks
+    const plainText = tempDiv.textContent || tempDiv.innerText || ''
+    console.log('PDF Export Debug - Plain text:', plainText)
     
-    // If no HTML tags, just split by line breaks
-    if (!html.includes('<')) {
-      const lines = html.split('\n').filter(line => line.trim())
-      for (const line of lines) {
-        const wrappedLines = pdf.splitTextToSize(line.trim(), maxWidth)
-        for (const wrappedLine of wrappedLines) {
-          pdf.text(wrappedLine, x, currentY)
-          currentY += 5
-        }
-      }
-      return currentY
-    }
+    // Split into lines and filter out empty ones
+    const lines = plainText
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
     
-    // Process HTML content
-    const lines = getText(tempDiv)
-    
-    // Filter out consecutive empty lines and excessive whitespace
-    const filteredLines = lines.filter((line, index) => {
-      // Keep non-empty lines
-      if (line.trim() !== '') return true
-      
-      // For empty lines, only keep if the previous line was not empty
-      if (index === 0) return false
-      return lines[index - 1].trim() !== ''
-    })
+    console.log('PDF Export Debug - Processed lines:', lines)
 
-    for (const line of filteredLines) {
-      if (line.trim() === '') {
-        // Empty line for spacing - reduced spacing
-        currentY += 3
-      } else {
-        // Wrap long lines
-        const wrappedLines = pdf.splitTextToSize(line, maxWidth)
-        for (const wrappedLine of wrappedLines) {
-          pdf.text(wrappedLine, x, currentY)
-          currentY += 5
-        }
+    // Render each line
+    for (const line of lines) {
+      const wrappedLines = pdf.splitTextToSize(line, maxWidth)
+      for (const wrappedLine of wrappedLines) {
+        pdf.text(wrappedLine, x, currentY)
+        currentY += 5
       }
     }
     
