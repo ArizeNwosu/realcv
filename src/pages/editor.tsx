@@ -82,6 +82,11 @@ export default function ResumeEditor() {
             // User has active Stripe subscription - activate local subscription
             console.log('🔄 Activating local subscription based on Stripe data')
             SubscriptionManager.activateSubscription(customerId, data.current_subscription.id)
+            
+            // Update the subscription status state immediately
+            const newStatus = SubscriptionManager.getSubscriptionStatus()
+            setSubscriptionStatus(newStatus)
+            
             if (updateState) setCanExportPDF(true)
             console.log('✅ Stripe subscription active, returning true')
             return true
@@ -173,11 +178,7 @@ export default function ResumeEditor() {
   // Load existing resume on mount
   useEffect(() => {
     const initializeEditor = async () => {
-      console.log('🚀 EDITOR LOADED - NEW VERSION WITH TXT/WORD FIX')
-      console.log('🔍 DEBUG: Current localStorage subscription:', localStorage.getItem('realcv_subscription'))
-      console.log('🔍 DEBUG: Current localStorage stripe_customer_id:', localStorage.getItem('stripe_customer_id'))
-      console.log('🔍 DEBUG: SubscriptionManager.getSubscriptionStatus():', SubscriptionManager.getSubscriptionStatus())
-      console.log('🔍 DEBUG: SubscriptionManager.canExportPDF():', SubscriptionManager.canExportPDF())
+      console.log('🚀 EDITOR LOADED - SUBSCRIPTION FIX VERSION')
       setIsLoading(true)
       
       // Wait for router to be ready
@@ -197,8 +198,15 @@ export default function ResumeEditor() {
       DocumentCodeManager.clearAllCodes() // Force clear all old codes
       console.log('Cleared all document codes - new exports will generate 12-character codes')
       
-      // Load subscription status
-      setSubscriptionStatus(SubscriptionManager.getSubscriptionStatus())
+      // Load subscription status and check for Stripe subscription
+      const initialStatus = SubscriptionManager.getSubscriptionStatus()
+      setSubscriptionStatus(initialStatus)
+      
+      // If local subscription is not active, check Stripe subscription
+      if (!initialStatus.isActive) {
+        console.log('🔍 Local subscription not active, checking Stripe...')
+        await checkCanExportPDF(true) // This will update subscription if Stripe is active
+      }
       
       // Only clear session if explicitly creating a new resume
       if (isCreatingNew) {
@@ -448,10 +456,7 @@ export default function ResumeEditor() {
 
   // TXT Export
   const handleExportTXT = async () => {
-    console.log('🔥 TXT Export function called!')
-    console.log('🔍 DEBUG TXT: Current subscription status:', SubscriptionManager.getSubscriptionStatus())
-    console.log('🔍 DEBUG TXT: Can export PDF?', SubscriptionManager.canExportPDF())
-    console.log('🔍 DEBUG TXT: localStorage subscription:', localStorage.getItem('realcv_subscription'))
+    console.log('📄 TXT Export initiated')
     
     // Use exact same logic as PDF export
     if (!currentResumeId) {
@@ -460,13 +465,13 @@ export default function ResumeEditor() {
       return
     }
 
-    // Check subscription status (both local and Stripe) - exact same as PDF
-    console.log('🔍 DEBUG TXT: About to call checkCanExportPDF()')
-    const canExport = await checkCanExportPDF()
-    console.log('🔍 DEBUG TXT: checkCanExportPDF() result:', canExport)
-    
-    // TEMPORARY FIX: Allow TXT export regardless of subscription for now
-    console.log('🚀 TEMPORARY: Allowing TXT export regardless of subscription status')
+    // Check subscription status (both local and Stripe)
+    const canExport = await checkCanExportPDF(true) // Pass true to update state
+    if (!canExport) {
+      setSaveMessage('TXT export requires RealCV Pro subscription.')
+      setTimeout(() => setSaveMessage(''), 3000)
+      return
+    }
     let txt = `${resumeTitle}\n\n`;
     resumeSections.forEach((section, index) => {
       if (section.content.trim()) {
@@ -608,10 +613,7 @@ export default function ResumeEditor() {
 
   // Word Export
   const handleExportWord = async () => {
-    console.log('🔥 Word Export function called!')
-    console.log('🔍 DEBUG WORD: Current subscription status:', SubscriptionManager.getSubscriptionStatus())
-    console.log('🔍 DEBUG WORD: Can export PDF?', SubscriptionManager.canExportPDF())
-    console.log('🔍 DEBUG WORD: localStorage subscription:', localStorage.getItem('realcv_subscription'))
+    console.log('📄 Word Export initiated')
     
     // Use exact same logic as PDF export
     if (!currentResumeId) {
@@ -620,13 +622,13 @@ export default function ResumeEditor() {
       return
     }
 
-    // Check subscription status (both local and Stripe) - exact same as PDF
-    console.log('🔍 DEBUG WORD: About to call checkCanExportPDF()')
-    const canExport = await checkCanExportPDF()
-    console.log('🔍 DEBUG WORD: checkCanExportPDF() result:', canExport)
-    
-    // TEMPORARY FIX: Allow Word export regardless of subscription for now
-    console.log('🚀 TEMPORARY: Allowing Word export regardless of subscription status')
+    // Check subscription status (both local and Stripe)
+    const canExport = await checkCanExportPDF(true) // Pass true to update state
+    if (!canExport) {
+      setSaveMessage('Word export requires RealCV Pro subscription.')
+      setTimeout(() => setSaveMessage(''), 3000)
+      return
+    }
     setIsExporting(true);
     setSaveMessage('');
     try {
@@ -865,12 +867,6 @@ export default function ResumeEditor() {
             </div>
             {/* Subscription Status */}
             <div className={styles.subscriptionPanel}>
-              {(() => {
-                console.log('🔍 RENDER DEBUG: subscriptionStatus:', subscriptionStatus)
-                console.log('🔍 RENDER DEBUG: subscriptionStatus.isActive:', subscriptionStatus.isActive)
-                console.log('🔍 RENDER DEBUG: SubscriptionManager.getSubscriptionStatus():', SubscriptionManager.getSubscriptionStatus())
-                return null
-              })()}
               {!subscriptionStatus.isActive ? (
                 <div className={`${styles.subscriptionBanner} ${styles.free}`}>
                   <div className={styles.subscriptionContent}>
