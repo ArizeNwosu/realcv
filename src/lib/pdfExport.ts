@@ -86,9 +86,21 @@ export class PDFExporter {
     // Render each line
     for (const line of lines) {
       const wrappedLines = pdf.splitTextToSize(line, maxWidth)
+      
+      // Debug logging for ACTIVITIES & LEADERSHIP section
+      if (html.includes('Presidential Medal')) {
+        console.log('ACTIVITIES DEBUG - Line:', line.substring(0, 50) + '...')
+        console.log('ACTIVITIES DEBUG - Wrapped into', wrappedLines.length, 'lines')
+        console.log('ACTIVITIES DEBUG - Y position before rendering:', currentY)
+      }
+      
       for (const wrappedLine of wrappedLines) {
         pdf.text(wrappedLine, x, currentY)
         currentY += 5
+      }
+      
+      if (html.includes('Presidential Medal')) {
+        console.log('ACTIVITIES DEBUG - Y position after rendering:', currentY)
       }
     }
     
@@ -162,7 +174,16 @@ export class PDFExporter {
       }
       
       // Render formatted content directly
+      const yBeforeRendering = yPosition
       yPosition = this.renderFormattedText(section.content, pdf, margin, yPosition, contentWidth)
+      
+      // Debug logging for ACTIVITIES & LEADERSHIP section
+      if (section.title === 'Activities & Leadership') {
+        console.log('ACTIVITIES DEBUG - Section Y before rendering:', yBeforeRendering)
+        console.log('ACTIVITIES DEBUG - Section Y after rendering:', yPosition)
+        console.log('ACTIVITIES DEBUG - Content took', yPosition - yBeforeRendering, 'units of space')
+      }
+      
       yPosition += 6 // Appropriate spacing after section content
       
       // Add line divider between sections (except for the last section)
