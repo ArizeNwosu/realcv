@@ -1,24 +1,26 @@
 import { useState, useEffect, useRef } from 'react'
+import { GetServerSideProps } from 'next'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { Question, QuestionSet, ResponsePortalManager } from '../../lib/responsePortal'
 import styles from '../../styles/respond.module.css'
 
 interface ResponsePageProps {
-  // No longer using SSR props
+  questionSet: QuestionSet | null
+  error?: string
 }
 
 interface ResponseState {
   [questionId: string]: string
 }
 
-export default function ResponsePage({}: ResponsePageProps) {
+export default function ResponsePage({ questionSet: initialQuestionSet, error: initialError }: ResponsePageProps) {
   console.log('🚀 ResponsePage component loaded')
   
   const router = useRouter()
-  const [questionSet, setQuestionSet] = useState<QuestionSet | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [questionSet, setQuestionSet] = useState<QuestionSet | null>(initialQuestionSet)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(initialError || null)
   const [responses, setResponses] = useState<ResponseState>({})
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -31,11 +33,12 @@ export default function ResponsePage({}: ResponsePageProps) {
   const textareaRefs = useRef<{ [questionId: string]: HTMLTextAreaElement | null }>({})
   const [telemetryData, setTelemetryData] = useState<{ [questionId: string]: any }>({})
 
-  // Load question set on client side
+  // Load question set on client side if SSR didn't find it
   useEffect(() => {
-    if (router.query.token && typeof router.query.token === 'string') {
+    if (!questionSet && router.query.token && typeof router.query.token === 'string') {
       const token = router.query.token
-      console.log('🔍 Looking for token:', token)
+      console.log('🔍 SSR failed, trying client-side for token:', token)
+      setLoading(true)
       
       try {
         // Debug: Check what's in localStorage
@@ -45,7 +48,7 @@ export default function ResponsePage({}: ResponsePageProps) {
         
         const qs = ResponsePortalManager.getQuestionSetByToken(token)
         if (qs) {
-          console.log('✅ Found question set:', qs)
+          console.log('✅ Found question set in localStorage:', qs)
           setQuestionSet(qs)
           setError(null)
         } else {
@@ -58,7 +61,7 @@ export default function ResponsePage({}: ResponsePageProps) {
       }
       setLoading(false)
     }
-  }, [router.query.token])
+  }, [router.query.token, questionSet])
 
   // Initialize telemetry data for each question
   useEffect(() => {
@@ -463,4 +466,43 @@ export default function ResponsePage({}: ResponsePageProps) {
   )
 }
 
-// No longer using getServerSideProps - using client-side loading instead
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const { token } = context.params!
+
+  if (!token || typeof token !== 'string') {
+    return {
+      props: {
+        questionSet: null,
+        error: 'Invalid token'
+      }
+    }
+  }
+
+  try {
+    // Import and use the manager directly on server side
+    const { ResponsePortalManager } = await import('../../lib/responsePortal')
+    const questionSet = ResponsePortalManager.getQuestionSetByToken(token)
+    
+    if (!questionSet) {
+      // Don't return error here, let client-side try localStorage
+      return {
+        props: {
+          questionSet: null
+        }
+      }
+    }
+
+    return {
+      props: {
+        questionSet
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching question set:', error)
+    return {
+      props: {
+        questionSet: null
+      }
+    }
+  }
+}
