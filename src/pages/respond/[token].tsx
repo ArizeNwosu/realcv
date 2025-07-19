@@ -15,12 +15,43 @@ interface ResponseState {
 }
 
 export default function ResponsePage({ questionSet: initialQuestionSet, error: initialError }: ResponsePageProps) {
-  console.log('🚀 ResponsePage component loaded')
+  console.log('🚀 ResponsePage component loaded with:', { initialQuestionSet, initialError })
   
   const router = useRouter()
   const [questionSet, setQuestionSet] = useState<QuestionSet | null>(initialQuestionSet)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(initialError || null)
+
+  // Force client-side loading regardless of SSR result
+  useEffect(() => {
+    console.log('🔄 useEffect running, router.query:', router.query)
+    if (router.query.token && typeof router.query.token === 'string' && !questionSet) {
+      const token = router.query.token
+      console.log('🔍 Client-side: Looking for token:', token)
+      setLoading(true)
+      
+      try {
+        const allQuestionSets = JSON.parse(localStorage.getItem('realcv_question_sets') || '[]')
+        console.log('📦 Raw localStorage question sets:', allQuestionSets)
+        
+        const foundQs = allQuestionSets.find((qs: any) => qs.token === token)
+        console.log('🎯 Direct localStorage lookup result:', foundQs)
+        
+        if (foundQs) {
+          console.log('✅ Found in localStorage, setting question set')
+          setQuestionSet(foundQs)
+          setError(null)
+        } else {
+          console.log('❌ Not found in localStorage')
+          setError(`Question set not found. Token: ${token}`)
+        }
+      } catch (err) {
+        console.error('❌ Error:', err)
+        setError('Failed to load question set')
+      }
+      setLoading(false)
+    }
+  }, [router.query.token])
   const [responses, setResponses] = useState<ResponseState>({})
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -32,36 +63,6 @@ export default function ResponsePage({ questionSet: initialQuestionSet, error: i
 
   const textareaRefs = useRef<{ [questionId: string]: HTMLTextAreaElement | null }>({})
   const [telemetryData, setTelemetryData] = useState<{ [questionId: string]: any }>({})
-
-  // Load question set on client side if SSR didn't find it
-  useEffect(() => {
-    if (!questionSet && router.query.token && typeof router.query.token === 'string') {
-      const token = router.query.token
-      console.log('🔍 SSR failed, trying client-side for token:', token)
-      setLoading(true)
-      
-      try {
-        // Debug: Check what's in localStorage
-        const allQuestionSets = ResponsePortalManager.getAllQuestionSets()
-        console.log('📦 All question sets in localStorage:', allQuestionSets)
-        console.log('🔍 Available tokens:', allQuestionSets.map(qs => qs.token))
-        
-        const qs = ResponsePortalManager.getQuestionSetByToken(token)
-        if (qs) {
-          console.log('✅ Found question set in localStorage:', qs)
-          setQuestionSet(qs)
-          setError(null)
-        } else {
-          console.log('❌ Question set not found for token:', token)
-          setError(`Question set not found or expired. Token: ${token}`)
-        }
-      } catch (err) {
-        console.error('❌ Error loading question set:', err)
-        setError('Failed to load question set')
-      }
-      setLoading(false)
-    }
-  }, [router.query.token, questionSet])
 
   // Initialize telemetry data for each question
   useEffect(() => {
