@@ -101,7 +101,7 @@ export default function EmployerSignup() {
           <div className="bg-white rounded-xl shadow-lg p-8">
             <div className="text-center mb-8">
               <h2 className="text-3xl font-bold text-gray-900">Create Employer Account</h2>
-              <p className="text-gray-600 mt-2">Join RealCV to start screening candidates with AI-resistant interview questions</p>
+              <p className="text-gray-600 mt-2">Join RealCV to start screening candidates with AI-resistant interview questions and human verification</p>
             </div>
 
             {error && (
