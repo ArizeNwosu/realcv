@@ -1,0 +1,357 @@
+/* Response Portal Styles */
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.noticeBar {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #856404;
+}
+
+.noticeIcon {
+  font-size: 16px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 32px;
+  padding: 24px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.header h1 {
+  margin: 0 0 8px 0;
+  color: #2c3e50;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.progress {
+  color: #7f8c8d;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.questionContainer {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.questionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.questionHeader h2 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.trackingIndicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #e74c3c;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.recordingDot {
+  width: 8px;
+  height: 8px;
+  background: #e74c3c;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.questionText {
+  font-size: 18px;
+  line-height: 1.6;
+  color: #34495e;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #3498db;
+}
+
+.responseTextarea {
+  width: 100%;
+  min-height: 200px;
+  padding: 16px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 16px;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  transition: border-color 0.3s ease;
+}
+
+.responseTextarea:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.responseInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  font-size: 14px;
+  color: #7f8c8d;
+}
+
+.tabSwitchWarning {
+  color: #e67e22;
+  font-weight: 500;
+}
+
+.navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.navButton {
+  padding: 12px 24px;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 120px;
+}
+
+.navButton:hover:not(:disabled) {
+  background: #2980b9;
+  transform: translateY(-1px);
+}
+
+.navButton:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.questionDots {
+  display: flex;
+  gap: 8px;
+}
+
+.questionDot {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #e9ecef;
+  background: white;
+  color: #7f8c8d;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.questionDot:hover {
+  border-color: #3498db;
+  color: #3498db;
+}
+
+.questionDot.active {
+  background: #3498db;
+  border-color: #3498db;
+  color: white;
+}
+
+.questionDot.answered {
+  background: #27ae60;
+  border-color: #27ae60;
+  color: white;
+}
+
+.submitSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.emailInput {
+  padding: 12px 16px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 14px;
+  width: 250px;
+}
+
+.emailInput:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+.submitButton {
+  padding: 16px 32px;
+  background: #27ae60;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 160px;
+}
+
+.submitButton:hover:not(:disabled) {
+  background: #229954;
+  transform: translateY(-1px);
+}
+
+.submitButton:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.errorMessage {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 16px;
+  border-radius: 8px;
+  margin-top: 16px;
+  border: 1px solid #f5c6cb;
+}
+
+.warningMessage {
+  background: #fff3cd;
+  color: #856404;
+  padding: 16px;
+  border-radius: 8px;
+  margin-top: 16px;
+  border: 1px solid #ffeaa7;
+}
+
+.successContainer {
+  text-align: center;
+  padding: 64px 32px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 64px;
+}
+
+.successContainer h1 {
+  color: #27ae60;
+  font-size: 32px;
+  margin-bottom: 16px;
+}
+
+.successContainer p {
+  font-size: 18px;
+  color: #34495e;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.submissionInfo {
+  margin-top: 32px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #3498db;
+}
+
+.submissionInfo small {
+  color: #7f8c8d;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.errorContainer {
+  text-align: center;
+  padding: 64px 32px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 64px;
+}
+
+.errorContainer h1 {
+  color: #e74c3c;
+  font-size: 32px;
+  margin-bottom: 16px;
+}
+
+.errorContainer p {
+  font-size: 18px;
+  color: #34495e;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
+  }
+  
+  .navigation {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  
+  .questionDots {
+    justify-content: center;
+  }
+  
+  .submitSection {
+    align-items: stretch;
+  }
+  
+  .emailInput {
+    width: 100%;
+  }
+  
+  .navButton {
+    width: 100%;
+  }
+}
