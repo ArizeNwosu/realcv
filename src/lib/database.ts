@@ -59,6 +59,8 @@ export class DatabaseManager {
       is_active: true
     }
 
+    console.log('Attempting to insert question set:', questionSet)
+    
     const { data, error } = await supabaseAdmin
       .from('question_sets')
       .insert([questionSet])
@@ -66,9 +68,17 @@ export class DatabaseManager {
       .single()
 
     if (error) {
-      console.error('Error creating question set:', error)
-      throw new Error(`Failed to create question set: ${error.message}`)
+      console.error('Supabase error creating question set:', error)
+      console.error('Error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      })
+      throw new Error(`Failed to create question set: ${error.message} (Code: ${error.code})`)
     }
+
+    console.log('Question set inserted successfully:', data)
 
     return this.dbToQuestionSet(data)
   }

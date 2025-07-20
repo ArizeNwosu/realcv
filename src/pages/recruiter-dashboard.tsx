@@ -87,6 +87,14 @@ export default function RecruiterDashboard() {
     }
 
     try {
+      console.log('Creating question set with:', {
+        title,
+        questionData,
+        userId: user.id,
+        userEmail: user.email,
+        userMetadata: user.user_metadata
+      })
+
       const questionSet = await DatabaseManager.createQuestionSet(
         title,
         questionData,
@@ -95,13 +103,16 @@ export default function RecruiterDashboard() {
         48 // 48 hours expiry
       )
 
+      console.log('Question set created successfully:', questionSet)
       resetForm()
       loadData(user.id)
 
       alert(`Question set created! Share this URL with candidates:\n${window.location.origin}/respond/${questionSet.token}`)
     } catch (error) {
-      console.error('Error creating question set:', error)
-      alert('Failed to create question set. Please try again.')
+      console.error('Detailed error creating question set:', error)
+      console.error('Error message:', error instanceof Error ? error.message : error)
+      console.error('User data:', { userId: user.id, userEmail: user.email, userType: user.user_metadata?.user_type })
+      alert(`Failed to create question set: ${error instanceof Error ? error.message : 'Unknown error'}. Check console for details.`)
     }
   }
 
