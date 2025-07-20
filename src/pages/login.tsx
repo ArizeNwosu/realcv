@@ -138,7 +138,7 @@ export default function Login() {
               {isSignUp ? (isEmployerSignup ? 'Create Employer Account' : 'Create Account') : 'Sign In'}
             </h1>
             <p className="text-gray-600 text-sm sm:text-base">
-              {isSignUp ? (isEmployerSignup ? 'Create your employer account to start screening candidates' : 'Sign up for your RealCV account') : 'Welcome back to RealCV'}
+              {isSignUp ? (isEmployerSignup ? 'Create your employer account to start screening candidates with AI-resistant questions' : 'Sign up for your RealCV account') : 'Welcome back to RealCV'}
             </p>
           </div>
 
